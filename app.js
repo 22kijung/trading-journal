@@ -168,6 +168,8 @@ function openPositionDetail(id) {
       <button class="submit-btn submit-buy" style="flex:2" onclick="updatePosition(${id})">저장</button>
       <button class="submit-btn" style="flex:1;background:var(--red-bg);color:var(--red)" onclick="closePosition(${id})">매도 완료</button>
     </div>
+    <div class="divider"></div>
+    <button class="submit-btn" style="background:transparent;color:var(--text3);border:1px solid var(--border);margin-top:0" onclick="deletePosition(${id})">포지션 삭제 (기록 제거)</button>
   `;
   openModal();
 }
@@ -179,6 +181,14 @@ function updatePosition(id) {
   positions[idx].currentPrice = parseFloat(document.getElementById('detail-price').value) || positions[idx].currentPrice;
   positions[idx].thesis = document.getElementById('detail-thesis').value;
   positions[idx].stopTrigger = document.getElementById('detail-trigger').value;
+  savePositions(positions);
+  closeModal();
+  renderPortfolio();
+}
+
+function deletePosition(id) {
+  if (!confirm('이 포지션을 완전히 삭제할까요? 복기 기록으로 이동하지 않고 사라집니다.')) return;
+  const positions = getPositions().filter(p => p.id !== id);
   savePositions(positions);
   closeModal();
   renderPortfolio();
@@ -303,6 +313,8 @@ function openWatchDetail(id) {
       <button class="submit-btn submit-watch" style="flex:2" onclick="updateWatch(${id})">저장</button>
       <button class="submit-btn submit-buy" style="flex:1" onclick="convertToPosition(${id})">매수 진입</button>
     </div>
+    <div class="divider"></div>
+    <button class="submit-btn" style="background:transparent;color:var(--text3);border:1px solid var(--border);margin-top:0" onclick="deleteWatch(${id})">관심 종목 삭제</button>
   `;
   openModal();
 }
@@ -322,6 +334,13 @@ function updateWatch(id) {
   if (idx === -1) return;
   list[idx].currentPrice = parseFloat(document.getElementById('wd-price').value) || list[idx].currentPrice;
   saveWatchlist(list);
+  closeModal();
+  renderWatchlist();
+}
+
+function deleteWatch(id) {
+  if (!confirm('이 관심 종목을 삭제할까요?')) return;
+  saveWatchlist(getWatchlist().filter(w => w.id !== id));
   closeModal();
   renderWatchlist();
 }
@@ -594,7 +613,10 @@ function openReviewDetail(id) {
     <textarea class="form-input" id="rv-happened" placeholder="예상과 뭐가 달랐나...">${r.whatHappened||''}</textarea>
     <div class="form-label">배운 점</div>
     <textarea class="form-input" id="rv-learned" placeholder="다음에 다르게 할 것...">${r.learned||''}</textarea>
-    <button class="submit-btn submit-buy" onclick="saveReviewDetail(${id})">복기 저장</button>
+    <div style="display:flex;gap:8px">
+      <button class="submit-btn submit-buy" style="flex:2" onclick="saveReviewDetail(${r.id})">복기 저장</button>
+      <button class="submit-btn" style="flex:1;background:transparent;color:var(--text3);border:1px solid var(--border)" onclick="deleteReview(${r.id})">삭제</button>
+    </div>
   `;
   openModal();
 }
@@ -618,6 +640,13 @@ function saveReviewDetail(id) {
   reviews[idx].whatHappened = document.getElementById('rv-happened').value;
   reviews[idx].learned = document.getElementById('rv-learned').value;
   saveReviews(reviews);
+  closeModal();
+  renderReview();
+}
+
+function deleteReview(id) {
+  if (!confirm('복기 기록을 삭제할까요?')) return;
+  saveReviews(getReviews().filter(r => r.id !== id));
   closeModal();
   renderReview();
 }
