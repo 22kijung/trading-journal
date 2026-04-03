@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>매매일지</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- 헤더 -->
+    <header class="header">
+      <div class="header-inner">
+        <span class="logo">매매일지</span>
+        <span class="today" id="today-date"></span>
+      </div>
+    </header>
+
+    <!-- 탭 -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="portfolio">보유 포지션</button>
+      <button class="tab" data-tab="watchlist">관심 종목</button>
+      <button class="tab" data-tab="entry">매매 전 체크</button>
+      <button class="tab" data-tab="review">복기</button>
+    </nav>
+
+    <!-- 보유 포지션 -->
+    <section id="tab-portfolio" class="tab-content active">
+      <div class="summary-grid" id="summary-grid"></div>
+      <div class="section-label">포지션 목록</div>
+      <div id="portfolio-list"></div>
+      <button class="fab" onclick="openEntryModal()">+ 신규 매매</button>
+    </section>
+
+    <!-- 관심 종목 -->
+    <section id="tab-watchlist" class="tab-content">
+      <div class="section-label">매수 조건 대기</div>
+      <div id="watchlist-list"></div>
+      <button class="fab" onclick="openWatchModal()">+ 관심 종목 추가</button>
+    </section>
+
+    <!-- 매매 전 체크 -->
+    <section id="tab-entry" class="tab-content">
+      <div class="form-card" id="entry-form"></div>
+    </section>
+
+    <!-- 복기 -->
+    <section id="tab-review" class="tab-content">
+      <div class="section-label">매도 완료 복기</div>
+      <div id="review-list"></div>
+    </section>
+
+  </div>
+
+  <!-- 모달 오버레이 -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()" id="modal-body"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
