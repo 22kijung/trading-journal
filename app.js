@@ -101,14 +101,29 @@ async function renderPortfolio() {
     if (pnl >= 0) posCount++; else negCount++;
   });
   const totalPct = totalInvest > 0 ? (totalPnl / totalInvest) * 100 : 0;
+  const totalMarketVal = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
 
   document.getElementById('summary-grid').innerHTML = `
-    <div class="metric"><div class="metric-label">총 평가손익</div><div class="metric-val ${pnlClass(totalPnl)}">${fmtNum(totalPnl)}원</div></div>
-    <div class="metric"><div class="metric-label">수익률</div><div class="metric-val ${pnlClass(totalPct)}">${fmtPct(totalPct)}</div></div>
-    <div class="metric"><div class="metric-label">수익 종목</div><div class="metric-val pos">${posCount}</div></div>
-    <div class="metric" style="position:relative"><div class="metric-label">손실 종목</div>
-      <div class="metric-val ${negCount > 0 ? 'neg' : 'neutral'}">${negCount}</div>
+    <div class="metric">
+      <div class="metric-label">총 평가손익</div>
+      <div class="metric-val ${pnlClass(totalPnl)}">${fmtNum(totalPnl)}원</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">${fmtPct(totalPct)}</div>
+    </div>
+    <div class="metric" style="position:relative">
+      <div class="metric-label">종목 현황</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+        <span style="font-size:18px;font-weight:600;color:var(--green)">▲${posCount}</span>
+        <span style="font-size:18px;font-weight:600;color:var(--red)">▼${negCount}</span>
+      </div>
       <button id="refresh-btn" onclick="refreshAllPrices()" style="position:absolute;top:10px;right:10px;background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer">현재가 갱신</button>
+    </div>
+    <div class="metric">
+      <div class="metric-label">총 투자금</div>
+      <div class="metric-val neutral" style="font-size:16px">${fmtNum(totalInvest)}원</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">평가금액</div>
+      <div class="metric-val neutral" style="font-size:16px">${fmtNum(totalMarketVal)}원</div>
     </div>
   `;
 
