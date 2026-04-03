@@ -57,16 +57,33 @@ async function refreshAllPrices() {
   if (positions.length === 0) return;
   const btn = document.getElementById('refresh-btn');
   btn.textContent = '갱신 중...'; btn.disabled = true;
-  positions.forEach(p => { if (p.code) SYMBOL_MAP[p.name] = p.code; });
-  let updated = false;
+
+  let updated = 0, noCode = 0;
   for (const p of positions) {
-    const price = await fetchPrice(p.name);
-    if (price) { await sb.update('positions', p.id, { current_price: price }); updated = true; }
+    // DB에 저장된 code 직접 사용 (SYMBOL_MAP 우선, DB code 보완)
+    const code = p.code || SYMBOL_MAP[p.name];
+    if (!code) { noCode++; continue; }
+    try {
+      const res = await fetch(`/api/price?symbol=${code}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.price) {
+        await sb.update('positions', p.id, { current_price: data.price });
+        updated++;
+      }
+    } catch { continue; }
   }
-  btn.textContent = updated ? '✓ 갱신 완료' : '코드 없는 종목 있음';
+
+  if (updated > 0 && noCode > 0) {
+    btn.textContent = `✓ ${updated}개 갱신 · ${noCode}개 코드 없음`;
+  } else if (updated > 0) {
+    btn.textContent = `✓ ${updated}개 갱신 완료`;
+  } else {
+    btn.textContent = '코드 없는 종목 확인 필요';
+  }
   btn.disabled = false;
-  setTimeout(() => { const b = document.getElementById('refresh-btn'); if (b) b.textContent = '현재가 갱신'; }, 2000);
-  if (updated) renderPortfolio();
+  setTimeout(() => { const b = document.getElementById('refresh-btn'); if (b) b.textContent = '현재가 갱신'; }, 3000);
+  if (updated > 0) renderPortfolio();
 }
 
 // ── 유틸 ──────────────────────────────────────────────────────
