@@ -174,9 +174,18 @@ async function openPositionDetail(id) {
       <div class="pos-meta-item">평가손익 <span class="${pnlClass(pnlAmt)}">${fmtNum(pnlAmt)}원</span></div>
     </div>
     <div class="divider"></div>
-    <div class="form-label">현재가 업데이트</div>
-    <input class="form-input" type="number" id="detail-price" value="${p.current_price}">
-    <div class="form-label" style="margin-top:8px">thesis</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:0">
+      <div style="flex:2">
+        <div class="form-label">현재가 업데이트</div>
+        <input class="form-input" type="number" id="detail-price" value="${p.current_price}" style="margin-bottom:0">
+      </div>
+      <div style="flex:1">
+        <div class="form-label">종목 코드 <span style="font-weight:400;color:var(--text3)">(6자리)</span></div>
+        <input class="form-input" id="detail-code" value="${p.code || ''}" placeholder="003490" maxlength="6" style="margin-bottom:0" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;margin-top:4px">코드 없으면 현재가 자동 갱신 안 됨</div>
+    <div class="form-label" style="margin-top:4px">thesis</div>
     <textarea class="form-input" id="detail-thesis">${p.thesis || ''}</textarea>
     <div class="form-label">손절 트리거</div>
     <textarea class="form-input" id="detail-trigger">${p.stop_trigger || ''}</textarea>
@@ -191,10 +200,14 @@ async function openPositionDetail(id) {
 }
 
 async function updatePosition(id) {
+  const code = document.getElementById('detail-code').value.trim();
+  const name = (await sb.get('positions', `&id=eq.${id}`))[0]?.name;
+  if (code && name) SYMBOL_MAP[name] = code;
   await sb.update('positions', id, {
     current_price: parseFloat(document.getElementById('detail-price').value),
     thesis: document.getElementById('detail-thesis').value,
     stop_trigger: document.getElementById('detail-trigger').value,
+    code: code || null,
   });
   closeModal(); renderPortfolio();
 }
