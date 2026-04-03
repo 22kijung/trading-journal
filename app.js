@@ -120,17 +120,25 @@ async function renderPortfolio() {
   const totalPct = totalInvest > 0 ? (totalPnl / totalInvest) * 100 : 0;
   const totalMarketVal = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
 
+  const pctColor = totalPct >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('summary-grid').innerHTML = `
     <div class="metric">
       <div class="metric-label">총 평가손익</div>
       <div class="metric-val ${pnlClass(totalPnl)}">${fmtNum(totalPnl)}원</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${fmtPct(totalPct)}</div>
+      <div style="font-size:13px;font-weight:600;color:${pctColor};margin-top:3px">${fmtPct(totalPct)}</div>
     </div>
     <div class="metric" style="position:relative">
       <div class="metric-label">종목 현황</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
-        <span style="font-size:18px;font-weight:600;color:var(--green)">▲${posCount}</span>
-        <span style="font-size:18px;font-weight:600;color:var(--red)">▼${negCount}</span>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px">
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:600;color:var(--green)">▲${posCount}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">수익</div>
+        </div>
+        <div style="width:1px;height:28px;background:var(--border)"></div>
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:600;color:var(--red)">▼${negCount}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">손실</div>
+        </div>
       </div>
       <button id="refresh-btn" onclick="refreshAllPrices()" style="position:absolute;top:10px;right:10px;background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer">현재가 갱신</button>
     </div>
