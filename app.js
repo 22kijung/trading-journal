@@ -129,15 +129,15 @@ async function renderPortfolio() {
     </div>
     <div class="metric" style="position:relative">
       <div class="metric-label">종목 현황</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px">
-        <div style="text-align:center">
-          <div style="font-size:20px;font-weight:600;color:var(--green)">▲${posCount}</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">수익</div>
+      <div class="stock-status">
+        <div class="stock-status-item">
+          <div class="stock-status-num" style="color:var(--green)">▲ ${posCount}</div>
+          <div class="stock-status-label">수익 종목</div>
         </div>
-        <div style="width:1px;height:28px;background:var(--border)"></div>
-        <div style="text-align:center">
-          <div style="font-size:20px;font-weight:600;color:var(--red)">▼${negCount}</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">손실</div>
+        <div class="stock-status-divider"></div>
+        <div class="stock-status-item">
+          <div class="stock-status-num" style="color:var(--red)">▼ ${negCount}</div>
+          <div class="stock-status-label">손실 종목</div>
         </div>
       </div>
       <button id="refresh-btn" onclick="refreshAllPrices()" style="position:absolute;top:10px;right:10px;background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer">현재가 갱신</button>
