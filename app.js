@@ -11,6 +11,54 @@ const saveWatchlist = (d) => DB.set('watchlist', d);
 const getReviews = () => DB.get('reviews');
 const saveReviews = (d) => DB.set('reviews', d);
 
+// ── 종목 코드 매핑 (네이버 금융 6자리 코드) ──────────────────
+const SYMBOL_MAP = {
+  '대한항공': '003490',
+  '삼성SDI': '006400',
+  '에코프로머티': '450080',
+  '루닛': '328130',
+  'POSCO홀딩스': '005490',
+  '삼성전자': '005930',
+  'SK하이닉스': '000660',
+  '카카오': '035720',
+  '네이버': '035420',
+  '현대차': '005380',
+};
+
+async function fetchPrice(name) {
+  const symbol = SYMBOL_MAP[name];
+  if (!symbol) return null;
+  try {
+    const res = await fetch(`/api/price?symbol=${symbol}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.price || null;
+  } catch { return null; }
+}
+
+async function refreshAllPrices() {
+  const positions = getPositions().filter(p => p.status === 'open');
+  if (positions.length === 0) return;
+
+  // 가격 업데이트 표시
+  document.getElementById('refresh-btn').textContent = '갱신 중...';
+  document.getElementById('refresh-btn').disabled = true;
+
+  let updated = false;
+  for (const p of positions) {
+    const price = await fetchPrice(p.name);
+    if (price) {
+      const all = getPositions();
+      const idx = all.findIndex(x => x.id === p.id);
+      if (idx !== -1) { all[idx].currentPrice = price; savePositions(all); updated = true; }
+    }
+  }
+
+  document.getElementById('refresh-btn').textContent = '현재가 갱신';
+  document.getElementById('refresh-btn').disabled = false;
+  if (updated) renderPortfolio();
+}
+
 // ── 초기 샘플 데이터 ──────────────────────────────────────────
 function initSampleData() {
   if (getPositions().length > 0) return;
@@ -102,8 +150,10 @@ function renderPortfolio() {
       <div class="metric-val ${pnlClass(totalPct)}">${fmtPct(totalPct)}</div></div>
     <div class="metric"><div class="metric-label">수익 종목</div>
       <div class="metric-val pos">${posCount}</div></div>
-    <div class="metric"><div class="metric-label">손실 종목</div>
-      <div class="metric-val ${negCount > 0 ? 'neg' : 'neutral'}">${negCount}</div></div>
+    <div class="metric" style="position:relative"><div class="metric-label">손실 종목</div>
+      <div class="metric-val ${negCount > 0 ? 'neg' : 'neutral'}">${negCount}</div>
+      <button id="refresh-btn" onclick="refreshAllPrices()" style="position:absolute;top:10px;right:10px;background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer">현재가 갱신</button>
+    </div>
   `;
 
   // 카드 목록
