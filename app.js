@@ -1,34 +1,33 @@
-// ── Supabase 클라이언트 ────────────────────────────────────────
-const SUPABASE_URL = 'https://dpdpwajcgbhswuryphsk.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwZHB3YWpjZ2Joc3d1cnlwaHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzk4NDksImV4cCI6MjA5MDgxNTg0OX0.FmdmqXwyOKC5hblkZPDgnS35p3q5hsu1-OliunjP_E8';
-
+// ── Supabase 클라이언트 (auth.js에서 SUPABASE_URL, SUPABASE_ANON_KEY, getAuthHeaders 제공) ──
 const sb = {
   async get(table, filter = '') {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=created_at.asc${filter}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=created_at.asc${filter}`, { headers });
     return res.ok ? res.json() : [];
   },
   async insert(table, data) {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
       method: 'POST',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify(data)
+      headers: { ...headers, Prefer: 'return=representation' },
+      body: JSON.stringify({ ...data, user_id: currentUser?.id })
     });
     return res.ok ? res.json() : null;
   },
   async update(table, id, data) {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
       method: 'PATCH',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      headers: { ...headers, Prefer: 'return=representation' },
       body: JSON.stringify(data)
     });
     return res.ok ? res.json() : null;
   },
   async delete(table, id) {
+    const headers = await getAuthHeaders();
     await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
       method: 'DELETE',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      headers
     });
   }
 };
