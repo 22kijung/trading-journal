@@ -137,6 +137,157 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── 보유 포지션 ───────────────────────────────────────────────
+
+// ── 승률 링 차트 ───────────────────────────────────────────────
+function drawWinRateRing(wins, losses) {
+  const canvas = document.getElementById('win-rate-ring');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const S = 80;
+  canvas.width = S * dpr; canvas.height = S * dpr;
+  canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
+  ctx.scale(dpr, dpr);
+  const cx = 40, cy = 40, R = 32, lw = 8;
+  const total = wins + losses;
+  const rate = total > 0 ? wins / total : 0;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(240,96,96,0.18)'; ctx.lineWidth = lw; ctx.stroke();
+  if (rate > 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + rate * Math.PI * 2);
+    ctx.strokeStyle = '#4caf7d'; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.stroke();
+  }
+  ctx.fillStyle = '#5a5a72';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold ' + (8.5 * dpr) + 'px -apple-system,sans-serif';
+  ctx.scale(1 / dpr, 1 / dpr);
+  ctx.fillText('승률', cx * dpr, (cy - 8) * dpr);
+  ctx.fillStyle = '#e8e8f0';
+  ctx.font = 'bold ' + (15 * dpr) + 'px -apple-system,sans-serif';
+  ctx.fillText(total > 0 ? Math.round(rate * 100) + '%' : '—', cx * dpr, (cy + 8) * dpr);
+}
+
+// ── 종목 비중 도넛 차트 ────────────────────────────────────────
+function drawDonutChart(positions) {
+  const canvas = document.getElementById('donut-chart');
+  if (!canvas || positions.length === 0) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const S = 80;
+  canvas.width = S * dpr; canvas.height = S * dpr;
+  canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
+  ctx.scale(dpr, dpr);
+  const cx = S / 2, cy = S / 2, R = 34, r = 20;
+  const total = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
+  if (!total) return;
+  const COLORS = ['#7b68ee','#4caf7d','#5090e0','#f0a030','#f06060','#e06be0','#60c0d0'];
+  const sorted = [...positions].sort((a, b) => (b.current_price * b.qty) - (a.current_price * a.qty));
+  let start = -Math.PI / 2;
+  sorted.forEach((p, i) => {
+    const slice = (p.current_price * p.qty) / total * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + R * Math.cos(start), cy + R * Math.sin(start));
+    ctx.arc(cx, cy, R, start, start + slice);
+    ctx.arc(cx, cy, r, start + slice, start, true);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
+    ctx.strokeStyle = 'var(--bg2,#17171f)'; ctx.lineWidth = 2; ctx.stroke();
+    start += slice;
+  });
+  ctx.beginPath(); ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
+  ctx.fillStyle = 'var(--bg2,#17171f)'; ctx.fill();
+  ctx.fillStyle = '#9090a8';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold ' + (9 * dpr) + 'px -apple-system,sans-serif';
+  ctx.scale(1 / dpr, 1 / dpr);
+  ctx.fillText(positions.length + '종목', cx * dpr, cy * dpr);
+  const legend = document.getElementById('donut-legend');
+  if (!legend) return;
+  const top3 = sorted.slice(0, 3);
+  const rest = sorted.slice(3);
+  const restPct = rest.reduce((s, p) => s + (p.current_price * p.qty) / total * 100, 0);
+  legend.innerHTML = [
+    ...top3.map((p, i) => {
+      const pct = ((p.current_price * p.qty) / total * 100).toFixed(1);
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">' +
+        '<div style="display:flex;align-items:center;gap:4px;min-width:0">' +
+        '<div style="width:7px;height:7px;border-radius:2px;background:' + COLORS[i] + ';flex-shrink:0"></div>' +
+        '<span style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.name + '</span></div>' +
+        '<span style="font-size:11px;font-weight:700;color:' + COLORS[i] + ';flex-shrink:0">' + pct + '%</span></div>';
+    }),
+    rest.length ? '<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">' +
+      '<div style="display:flex;align-items:center;gap:4px;min-width:0">' +
+      '<div style="width:7px;height:7px;border-radius:2px;background:#5a5a72;flex-shrink:0"></div>' +
+      '<span style="font-size:11px;color:var(--text3)">기타 ' + rest.length + '종목</span></div>' +
+      '<span style="font-size:11px;font-weight:700;color:#5a5a72;flex-shrink:0">' + restPct.toFixed(1) + '%</span></div>' : ''
+  ].join('');
+}
+
+// ── 미니 라인차트 ─────────────────────────────────────────────
+// 미니 라인차트 (평가금액 카드 내부)
+function drawPortfolioChart(snapshots, currentVal) {
+  const canvas = document.getElementById('portfolio-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = 120 * dpr; canvas.height = 48 * dpr;
+  canvas.style.width = '120px'; canvas.style.height = '48px';
+  ctx.scale(dpr, dpr);
+
+  // 최근 14일 데이터 + 오늘 현재값
+  const points = [...snapshots].reverse().slice(-13);
+  const allVals = [...points.map(s => s.total_value), currentVal];
+  if (allVals.length < 2) {
+    ctx.fillStyle = 'rgba(144,144,168,0.3)';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('데이터 수집 중', 4, 24);
+    return;
+  }
+
+  const min = Math.min(...allVals) * 0.998;
+  const max = Math.max(...allVals) * 1.002;
+  const range = max - min || 1;
+  const W = 120, H = 48, pad = 4;
+
+  const toX = i => pad + (i / (allVals.length - 1)) * (W - pad * 2);
+  const toY = v => H - pad - ((v - min) / range) * (H - pad * 2);
+
+  const isUp = currentVal >= (points[0]?.total_value || currentVal);
+  const color = isUp ? '#4caf7d' : '#f06060';
+
+  // 그라데이션 fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, isUp ? 'rgba(76,175,125,0.25)' : 'rgba(240,96,96,0.25)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.beginPath();
+  allVals.forEach((v, i) => {
+    i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.lineTo(toX(allVals.length - 1), H);
+  ctx.lineTo(toX(0), H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // 라인
+  ctx.beginPath();
+  allVals.forEach((v, i) => {
+    i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // 마지막 점
+  ctx.beginPath();
+  ctx.arc(toX(allVals.length - 1), toY(currentVal), 3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
 async function renderPortfolio() {
   const [positions, indices, snapshots] = await Promise.all([
     sb.get('positions', '&status=eq.open'),
@@ -1235,68 +1386,6 @@ async function saveSnapshotIfNeeded(positions) {
   await sb.insert('snapshots', { date: today, total_value: totalValue, total_invest: totalInvest, total_pnl: totalPnl });
 }
 
-// 미니 라인차트 (평가금액 카드 내부)
-function drawPortfolioChart(snapshots, currentVal) {
-  const canvas = document.getElementById('portfolio-chart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = 120 * dpr; canvas.height = 48 * dpr;
-  canvas.style.width = '120px'; canvas.style.height = '48px';
-  ctx.scale(dpr, dpr);
-
-  // 최근 14일 데이터 + 오늘 현재값
-  const points = [...snapshots].reverse().slice(-13);
-  const allVals = [...points.map(s => s.total_value), currentVal];
-  if (allVals.length < 2) {
-    ctx.fillStyle = 'rgba(144,144,168,0.3)';
-    ctx.font = '9px sans-serif';
-    ctx.fillText('데이터 수집 중', 4, 24);
-    return;
-  }
-
-  const min = Math.min(...allVals) * 0.998;
-  const max = Math.max(...allVals) * 1.002;
-  const range = max - min || 1;
-  const W = 120, H = 48, pad = 4;
-
-  const toX = i => pad + (i / (allVals.length - 1)) * (W - pad * 2);
-  const toY = v => H - pad - ((v - min) / range) * (H - pad * 2);
-
-  const isUp = currentVal >= (points[0]?.total_value || currentVal);
-  const color = isUp ? '#4caf7d' : '#f06060';
-
-  // 그라데이션 fill
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, isUp ? 'rgba(76,175,125,0.25)' : 'rgba(240,96,96,0.25)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-  ctx.beginPath();
-  allVals.forEach((v, i) => {
-    i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v));
-  });
-  ctx.lineTo(toX(allVals.length - 1), H);
-  ctx.lineTo(toX(0), H);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // 라인
-  ctx.beginPath();
-  allVals.forEach((v, i) => {
-    i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v));
-  });
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  // 마지막 점
-  ctx.beginPath();
-  ctx.arc(toX(allVals.length - 1), toY(currentVal), 3, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
 
 // 전체 그래프 렌더 (통계 탭)
 async function renderPortfolioGraph() {
@@ -1369,72 +1458,4 @@ async function renderPortfolioGraph() {
       <span style="color:${color};font-weight:600">현재 ${fmtNum(vals[vals.length-1])}원</span>
     </div>
   `;
-}
-
-
-// ════════════════════════════════════════════════════════════════
-// 종목 비중 도넛 차트 (개선)
-// ════════════════════════════════════════════════════════════════
-function drawDonutChart(positions) {
-  const canvas = document.getElementById('donut-chart');
-  if (!canvas || positions.length === 0) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const S = 80;
-  canvas.width = S * dpr; canvas.height = S * dpr;
-  canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
-  ctx.scale(dpr, dpr);
-  const cx = S / 2, cy = S / 2, R = 34, r = 20;
-  const total = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
-  if (!total) return;
-  const COLORS = ['#7b68ee','#4caf7d','#5090e0','#f0a030','#f06060','#e06be0','#60c0d0','#90c060'];
-  const sorted = [...positions].sort((a, b) => (b.current_price * b.qty) - (a.current_price * a.qty));
-  let startAngle = -Math.PI / 2;
-  sorted.forEach((p, i) => {
-    const weight = (p.current_price * p.qty) / total;
-    const slice = weight * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(cx + R * Math.cos(startAngle), cy + R * Math.sin(startAngle));
-    ctx.arc(cx, cy, R, startAngle, startAngle + slice);
-    ctx.arc(cx, cy, r, startAngle + slice, startAngle, true);
-    ctx.closePath();
-    ctx.fillStyle = COLORS[i % COLORS.length];
-    ctx.fill();
-    ctx.strokeStyle = 'var(--bg2, #17171f)';
-    ctx.lineWidth = 2; ctx.stroke();
-    startAngle += slice;
-  });
-  ctx.beginPath(); ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
-  ctx.fillStyle = 'var(--bg2, #17171f)'; ctx.fill();
-  ctx.fillStyle = '#9090a8';
-  ctx.font = `bold ${9 * dpr}px -apple-system,sans-serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.scale(1 / dpr, 1 / dpr);
-  ctx.fillText(positions.length + '종목', cx * dpr, cy * dpr);
-
-  // 범례: 색상으로 퍼센트 강조
-  const legend = document.getElementById('donut-legend');
-  if (!legend) return;
-  const top3 = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
-  const restPct = rest.reduce((s, p) => s + (p.current_price * p.qty) / total * 100, 0);
-  legend.innerHTML = [
-    ...top3.map((p, i) => {
-      const pct = ((p.current_price * p.qty) / total * 100).toFixed(1);
-      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">
-        <div style="display:flex;align-items:center;gap:4px;min-width:0">
-          <div style="width:7px;height:7px;border-radius:2px;background:${COLORS[i]};flex-shrink:0"></div>
-          <span style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
-        </div>
-        <span style="font-size:11px;font-weight:700;color:${COLORS[i]};flex-shrink:0">${pct}%</span>
-      </div>`;
-    }),
-    rest.length ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">
-      <div style="display:flex;align-items:center;gap:4px;min-width:0">
-        <div style="width:7px;height:7px;border-radius:2px;background:#5a5a72;flex-shrink:0"></div>
-        <span style="font-size:11px;color:var(--text3)">기타 ${rest.length}종목</span>
-      </div>
-      <span style="font-size:11px;font-weight:700;color:#5a5a72;flex-shrink:0">${restPct.toFixed(1)}%</span>
-    </div>` : ''
-  ].join('');
 }
