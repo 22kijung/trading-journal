@@ -3,6 +3,8 @@ export const config = { runtime: 'edge' };
 export default async function handler(req) {
   const { searchParams } = new URL(req.url);
   const symbol = searchParams.get('symbol');
+  const type = searchParams.get('type'); // 'index' or default 'stock'
+
   if (!symbol) {
     return new Response(JSON.stringify({ error: 'symbol required' }), {
       status: 400, headers: { 'Content-Type': 'application/json' }
@@ -20,25 +22,44 @@ export default async function handler(req) {
     });
     if (!res.ok) return null;
     const json = await res.json();
-    const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
-    return price ? Math.round(price) : null;
+    const meta = json?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+    return {
+      price: Math.round(meta.regularMarketPrice * 100) / 100,
+      prev: Math.round(meta.chartPreviousClose * 100) / 100,
+    };
   }
 
   try {
-    // KOSPI 시도 → KOSDAQ 시도
-    let price = await tryFetch(`${symbol}.KS`);
-    if (!price) price = await tryFetch(`${symbol}.KQ`);
+    let result = null;
 
-    if (!price) {
-      return new Response(JSON.stringify({ error: 'parse failed', symbol }), {
+    if (type === 'index') {
+      // 지수는 심볼 그대로 사용 (^KS11, ^KQ11, ^GSPC)
+      result = await tryFetch(symbol);
+    } else {
+      // 종목은 KS → KQ 순으로 시도
+      result = await tryFetch(`${symbol}.KS`);
+      if (!result) result = await tryFetch(`${symbol}.KQ`);
+    }
+
+    if (!result) {
+      return new Response(JSON.stringify({ error: 'not found', symbol }), {
         status: 404, headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    return new Response(JSON.stringify({ symbol, price }), {
+    const change = result.prev ? ((result.price - result.prev) / result.prev * 100) : null;
+
+    return new Response(JSON.stringify({
+      symbol,
+      price: result.price,
+      prev: result.prev,
+      change: change ? Math.round(change * 100) / 100 : null,
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 's-maxage=60' }
     });
+
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500, headers: { 'Content-Type': 'application/json' }
