@@ -244,8 +244,10 @@ function calcPnlAmt(entry, current, qty) {
   return (sellAmt - adj) * qty;
 }
 function pnlClass(n) { return n >= 0 ? 'pos' : 'neg'; }
-function todayStr() { const d = new Date(); return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0'); }
-
+function todayStr() {
+  const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  return kst.getFullYear() + '.' + String(kst.getMonth() + 1).padStart(2, '0') + '.' + String(kst.getDate()).padStart(2, '0');
+}
 // ── 탭 전환 ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab').forEach(btn => {
