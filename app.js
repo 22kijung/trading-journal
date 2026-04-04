@@ -287,10 +287,13 @@ async function renderPortfolio() {
 
   const listEl = document.getElementById('portfolio-list');
   if (positions.length === 0) {
-    listEl.innerHTML = '<div class="empty">보유 포지션 없음<br>+ 신규 매매 버튼으로 추가하세요</div>';
+    listEl.innerHTML = '<div class="sort-bar"><button class="sort-btn active" id="sort-date" onclick="setSortPositions(\'date\')">날짜순</button><button class="sort-btn" id="sort-pnl" onclick="setSortPositions(\'pnl\')">수익률순</button><button class="sort-btn" id="sort-invest" onclick="setSortPositions(\'invest\')">투자금순</button></div><div class="empty">보유 포지션 없음<br>+ 신규 매매 버튼으로 추가하세요</div>';
     return;
   }
-  listEl.innerHTML = positions.map(p => {
+  checkPriceAlerts(positions);
+  const sortedPositions = sortPositions(positions);
+  listEl.innerHTML = '<div class="sort-bar"><button class="sort-btn' + (currentSort==='date'?' active':'') + '" id="sort-date" onclick="setSortPositions(\'date\')">날짜순</button><button class="sort-btn' + (currentSort==='pnl'?' active':'') + '" id="sort-pnl" onclick="setSortPositions(\'pnl\')">수익률순</button><button class="sort-btn' + (currentSort==='invest'?' active':'') + '" id="sort-invest" onclick="setSortPositions(\'invest\')">투자금순</button></div>';
+  listEl.innerHTML += sortedPositions.map(p => {
     const pnlPct = calcPnlPct(p.entry, p.current_price);
     const pnlAmt = calcPnlAmt(p.entry, p.current_price, p.qty);
     const badge = p.type === 'core' ? 'badge-core' : 'badge-trade';
@@ -349,7 +352,7 @@ async function openPositionDetail(id) {
     <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:0">
       <div style="flex:2">
         <div class="form-label">현재가 업데이트</div>
-        <input class="form-input" type="number" id="detail-price" value="${p.current_price}" style="margin-bottom:0">
+        <input class="form-input" type="number" id="detail-price" inputmode="decimal" value="${p.current_price}" style="margin-bottom:0">
       </div>
       <div style="flex:1">
         <div class="form-label">종목 코드 <span style="font-weight:400;color:var(--text3)">(6자리)</span></div>
@@ -402,6 +405,20 @@ async function closePosition(id) {
   });
   await sb.update('positions', id, { status: 'closed' });
   closeModal(); renderPortfolio(); renderReview();
+  // 복기 작성 유도
+  setTimeout(() => {
+    document.getElementById('modal-body').innerHTML = `
+      <div class="modal-title">📝 복기 작성할까요?</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px">
+        매도 완료됐어요.<br>지금 바로 복기를 작성하면 기억이 생생할 때 더 도움이 돼요.
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="submit-btn submit-buy" style="flex:2" onclick="closeModal();document.querySelector('[data-tab=\'review\']').click()">지금 복기 작성</button>
+        <button class="submit-btn" style="flex:1;background:transparent;color:var(--text3);border:1px solid var(--border)" onclick="closeModal()">나중에</button>
+      </div>
+    `;
+    openModal();
+  }, 300);
 }
 
 // 포지션으로 복귀 (매도 취소)
@@ -459,9 +476,9 @@ function openWatchModal() {
     <div class="form-label">종목 코드</div>
     <input class="form-input" id="w-code" placeholder="ex) 005490" maxlength="6">
     <div class="form-label">목표 진입가</div>
-    <input class="form-input" type="number" id="w-target" placeholder="280,000">
+    <input class="form-input" type="number" id="w-target" inputmode="decimal" placeholder="280,000">
     <div class="form-label">현재가</div>
-    <input class="form-input" type="number" id="w-current" placeholder="308,000">
+    <input class="form-input" type="number" id="w-current" inputmode="decimal" placeholder="308,000">
     <div class="form-label">투자 thesis</div>
     <textarea class="form-input" id="w-thesis" placeholder="왜 이 종목에 관심을 갖는지..."></textarea>
     <div class="form-label">진입 조건 (한 줄씩)</div>
@@ -498,7 +515,7 @@ async function openWatchDetail(id) {
     ${condRows}
     <div class="divider"></div>
     <div class="form-label">현재가 업데이트</div>
-    <input class="form-input" type="number" id="wd-price" value="${w.current_price || ''}">
+    <input class="form-input" type="number" id="wd-price" inputmode="decimal" value="${w.current_price || ''}">
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="submit-btn submit-watch" style="flex:2" onclick="updateWatch(${id})">저장</button>
       <button class="submit-btn submit-buy" style="flex:1" onclick="convertToPosition(${id})">매수 진입</button>
@@ -566,13 +583,13 @@ function renderEntryForm(prefillName = '', prefillThesis = '', prefillCode = '')
     <div class="form-section">
       <div class="form-label">가격</div>
       <div class="price-grid">
-        <div class="price-cell"><div class="price-cell-label">진입가</div><input type="number" id="e-entry" placeholder="23,800" oninput="calcEntryRR()"></div>
-        <div class="price-cell"><div class="price-cell-label" id="e-stop-label">손절가</div><input type="number" id="e-stop" placeholder="22,000" oninput="calcEntryRR()"></div>
-        <div class="price-cell"><div class="price-cell-label">목표가</div><input type="number" id="e-target" placeholder="31,000" oninput="calcEntryRR()"></div>
+        <div class="price-cell"><div class="price-cell-label">진입가</div><input type="number" id="e-entry" placeholder="23,800" inputmode="decimal" oninput="calcEntryRR()"></div>
+        <div class="price-cell"><div class="price-cell-label" id="e-stop-label">손절가</div><input type="number" id="e-stop" placeholder="22,000" inputmode="decimal" oninput="calcEntryRR()"></div>
+        <div class="price-cell"><div class="price-cell-label">목표가</div><input type="number" id="e-target" placeholder="31,000" inputmode="decimal" oninput="calcEntryRR()"></div>
       </div>
       <div class="rr-line">리스크/리워드: <span id="e-rr">—</span></div>
       <div class="form-label">수량</div>
-      <input class="form-input" type="number" id="e-qty" placeholder="65">
+      <input class="form-input" type="number" id="e-qty" placeholder="65" inputmode="numeric">
     </div>
     <div class="form-section">
       <div class="form-label" id="e-trigger-label">손절 트리거 (코어: 이벤트 기준)</div>
@@ -824,8 +841,15 @@ function openEntryModal() {
 }
 
 // ── 초기화 (auth.js showApp()에서 호출) ───────────────────────
+function showLoading(elId) {
+  const el = document.getElementById(elId);
+  if (el) el.innerHTML = '<div class="skeleton-wrap"><div class="skeleton"></div><div class="skeleton" style="width:70%"></div><div class="skeleton" style="width:85%"></div></div>';
+}
+
 function initApp() {
   document.getElementById('today-date').textContent = todayStr();
+  showLoading('portfolio-list');
+  showLoading('summary-grid');
   renderPortfolio();
   renderEntryForm();
 }
@@ -1075,4 +1099,84 @@ async function exportCSV() {
   const a = document.createElement('a');
   a.href = url; a.download = `매매일지_${todayStr()}.csv`; a.click();
   URL.revokeObjectURL(url);
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// ⑧ 다크/라이트 모드
+// ════════════════════════════════════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  document.body.classList.toggle('light', theme === 'light');
+  localStorage.setItem('theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// ════════════════════════════════════════════════════════════════
+// ⑨ 포지션 정렬
+// ════════════════════════════════════════════════════════════════
+let currentSort = 'date';
+
+function setSortPositions(type) {
+  currentSort = type;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('sort-' + type);
+  if (btn) btn.classList.add('active');
+  renderPortfolio();
+}
+
+function sortPositions(positions) {
+  const arr = [...positions];
+  if (currentSort === 'pnl') {
+    return arr.sort((a, b) => {
+      const pa = calcPnlPct(a.entry, a.current_price);
+      const pb = calcPnlPct(b.entry, b.current_price);
+      return pb - pa;
+    });
+  }
+  if (currentSort === 'invest') {
+    return arr.sort((a, b) => (b.entry * b.qty) - (a.entry * a.qty));
+  }
+  // 날짜순 (기본)
+  return arr.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+}
+
+// ════════════════════════════════════════════════════════════════
+// ⑩ 브라우저 푸시 알림
+// ════════════════════════════════════════════════════════════════
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+}
+
+function sendNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(title, { body, icon: '/favicon.ico' });
+}
+
+async function checkPriceAlerts(positions) {
+  if (!isMarketHours()) return;
+  for (const p of positions) {
+    const pnlPct = calcPnlPct(p.entry, p.current_price);
+    // 목표가 90% 이상 도달
+    if (p.target && p.current_price >= p.target * 0.97) {
+      sendNotification(`🎯 ${p.name} 목표가 근접`, `현재가 ${fmtNum(p.current_price)}원 — 목표가 ${fmtNum(p.target)}원`);
+    }
+    // 손절가 근접 (5% 이내)
+    if (p.stop && p.current_price <= p.stop * 1.05) {
+      sendNotification(`⚠️ ${p.name} 손절가 근접`, `현재가 ${fmtNum(p.current_price)}원 — 손절가 ${fmtNum(p.stop)}원`);
+    }
+  }
 }
