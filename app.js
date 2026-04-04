@@ -142,6 +142,16 @@ async function renderPortfolio() {
   const totalMarketVal = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
 
   const pctColor = totalPct >= 0 ? 'var(--green)' : 'var(--red)';
+
+  function idxHtml(key) {
+    const d = indices[key];
+    if (!d || !d.price) return '<span style="font-size:13px;font-weight:600;color:var(--text2)">—</span>';
+    const c = d.change >= 0 ? 'var(--green)' : 'var(--red)';
+    const sign = d.change >= 0 ? '+' : '';
+    const chg = d.change !== null ? sign + d.change.toFixed(2) + '%' : '';
+    return '<span style="font-size:13px;font-weight:600;color:' + c + '">' + d.price.toLocaleString() + ' <span style="font-size:11px">' + chg + '</span></span>';
+  }
+
   document.getElementById('summary-grid').innerHTML = `
     <div class="metric">
       <div class="metric-label">총 평가손익</div>
