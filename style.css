@@ -1,463 +1,142 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>매매일지</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-:root {
-  --bg: #0f0f13;
-  --bg2: #17171f;
-  --bg3: #1e1e28;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --text: #e8e8f0;
-  --text2: #9090a8;
-  --text3: #5a5a72;
-  --purple: #7b68ee;
-  --purple-bg: rgba(123,104,238,0.12);
-  --green: #4caf7d;
-  --green-bg: rgba(76,175,125,0.12);
-  --red: #f06060;
-  --red-bg: rgba(240,96,96,0.12);
-  --amber: #f0a030;
-  --amber-bg: rgba(240,160,48,0.12);
-  --blue: #5090e0;
-  --blue-bg: rgba(80,144,224,0.12);
-  --radius: 10px;
-  --radius-sm: 6px;
-}
+  <!-- 로그인 화면 -->
+  <div id="login-screen" style="display:none; position:fixed; inset:0; background:#0f0f13; z-index:9999; flex-direction:column; align-items:center; justify-content:center; gap:16px;">
+    <div style="font-size:26px; font-weight:700; color:#7b68ee; letter-spacing:-0.5px;">매매일지</div>
+    <div style="font-size:14px; color:#9090a8; margin-bottom:8px;">로그인 후 사용하세요</div>
+    <button onclick="signInWithGoogle()" style="display:flex; align-items:center; gap:10px; background:#fff; color:#333; border:none; border-radius:12px; padding:13px 28px; font-size:15px; font-weight:600; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.3);">
+      <img src="https://www.google.com/favicon.ico" width="18" height="18"> Google로 로그인
+    </button>
+  </div>
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, 'Segoe UI', sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  min-height: 100vh;
-}
+  <div class="app" style="display:none;">
 
-.app { max-width: 560px; margin: 0 auto; padding-bottom: 80px; }
+    <!-- 헤더 -->
+    <header class="header">
+      <div class="header-inner">
+        <span class="logo">매매일지</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="today" id="today-date"></span>
+          <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">☀️</button>
+          <button onclick="signOut()" style="display:flex; align-items:center; gap:5px; background:rgba(240,96,96,0.1); border:1px solid rgba(240,96,96,0.25); color:#f06060; font-size:11px; font-weight:600; cursor:pointer; padding:5px 10px; border-radius:20px; transition:all 0.15s;" onmouseover="this.style.background='rgba(240,96,96,0.2)'" onmouseout="this.style.background='rgba(240,96,96,0.1)'">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f06060" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            로그아웃
+          </button>
+        </div>
+      </div>
+    </header>
 
-/* 헤더 */
-.header {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-}
-.logo { font-size: 16px; font-weight: 600; color: var(--purple); letter-spacing: -0.3px; }
-.today { font-size: 12px; color: var(--text3); }
+    <!-- 탭 (스크롤 가능) -->
+    <nav class="tabs" id="main-tabs">
+      <button class="tab" data-tab="entry">진입 체크</button>
+      <button class="tab active" data-tab="portfolio">보유 포지션</button>
+      <button class="tab" data-tab="watchlist">관심 종목</button>
+      <button class="tab" data-tab="review">트레이드 로그</button>
+      <button class="tab" data-tab="stats">통계</button>
+      <button class="tab" data-tab="diary">매매 메모</button>
+    </nav>
 
-/* 탭 */
-.tabs {
-  display: flex;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 49px;
-  z-index: 9;
-}
-.tab {
-  flex: 1;
-  padding: 10px 4px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text3);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+    <!-- 스와이프 컨테이너 -->
+    <div id="swipe-container">
 
-/* 탭 콘텐츠 */
-.tab-content { display: none; padding: 16px; }
-.tab-content.active { display: block; }
+      <!-- 진입 체크 -->
+      <section id="tab-entry" class="tab-content">
+        <div class="form-card" id="entry-form"></div>
+      </section>
 
-/* 섹션 레이블 */
-.section-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 10px;
-}
+      <!-- 보유 포지션 -->
+      <section id="tab-portfolio" class="tab-content active">
+        <div class="summary-grid" id="summary-grid"></div>
+        <div class="section-label">포지션 목록</div>
+        <div id="portfolio-list"></div>
+        <button class="fab" onclick="openEntryModal()">+ 신규 매매</button>
+      </section>
 
-/* 요약 그리드 */
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-.metric {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-}
-.metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
-.metric-val { font-size: 20px; font-weight: 600; }
-.metric-val.pos { color: var(--green); }
-.metric-val.neg { color: var(--red); }
-.pos { color: var(--green); }
-.neg { color: var(--red); }
-.metric-val.neutral { color: var(--text); }
+      <!-- 관심 종목 -->
+      <section id="tab-watchlist" class="tab-content">
+        <div class="section-label">매수 조건 대기</div>
+        <div id="watchlist-list"></div>
+        <button class="fab" onclick="openWatchModal()">+ 관심 종목 추가</button>
+      </section>
 
-/* 포지션 카드 */
-.pos-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.pos-card:hover { border-color: var(--border2); }
-.pos-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
-.pos-name { font-size: 15px; font-weight: 600; }
-.pos-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.pos-pnl { text-align: right; }
-.pos-pnl-pct { font-size: 18px; font-weight: 600; }
-.pos-pnl-amt { font-size: 11px; margin-top: 2px; }
-.metric .stock-status { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 8px; height: 44px; }
-.metric .stock-status-item { text-align: center; }
-.metric .stock-status-num { font-size: 22px; font-weight: 600; line-height: 1; }
-.metric .stock-status-label { font-size: 10px; color: var(--text3); margin-top: 3px; }
-.metric .stock-status-divider { width: 1px; height: 32px; background: var(--border); }
-.pos-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
-.pos-meta-item { font-size: 12px; color: var(--text2); }
-.pos-meta-item span { color: var(--text); font-weight: 500; }
+      <!-- 트레이드 로그 -->
+      <section id="tab-review" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="section-label" style="margin-bottom:0">매도 완료 복기</div>
+          <button onclick="exportCSV()" style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;cursor:pointer;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV 내보내기
+          </button>
+        </div>
+        <div id="review-list"></div>
+      </section>
 
-/* 배지 */
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 500;
-}
-.badge-core { background: var(--purple-bg); color: var(--purple); }
-.badge-trade { background: var(--blue-bg); color: var(--blue); }
-.badge-watch { background: var(--amber-bg); color: var(--amber); }
-.badge-closed { background: var(--bg3); color: var(--text3); }
+      <!-- 통계 -->
+      <section id="tab-stats" class="tab-content">
+        <div class="section-label" style="margin-bottom:12px">평가금액 추이</div>
+        <div id="portfolio-graph" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:20px;min-height:80px"></div>
+        <div class="section-label" style="margin-bottom:12px">수익률 통계</div>
+        <div id="stats-content"></div>
+      </section>
 
-/* thesis 박스 */
-.thesis-box {
-  background: var(--bg3);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  font-size: 12px;
-  color: var(--text2);
-  line-height: 1.6;
-  margin-top: 8px;
-}
-.trigger-line {
-  font-size: 11px;
-  margin-top: 6px;
-  padding-left: 10px;
-  border-left: 2px solid var(--red);
-  color: var(--red);
-  line-height: 1.5;
-}
-.trigger-line.warn { border-color: var(--amber); color: var(--amber); }
+      <!-- 매매 메모 -->
+      <section id="tab-diary" class="tab-content">
+        <div class="section-label">매매 일기</div>
+        <div id="diary-list"></div>
+        <button class="fab" onclick="openDiaryModal()">+ 메모 추가</button>
+      </section>
 
-/* 관심 종목 카드 */
-.watch-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 10px;
-}
-.cond-row { display: flex; align-items: center; gap: 8px; margin-top: 5px; font-size: 12px; color: var(--text2); }
-.cond-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.cond-dot.ok { background: var(--green); }
-.cond-dot.pending { background: var(--text3); }
+    </div><!-- /swipe-container -->
+  </div>
 
-/* FAB */
-.fab {
-  position: fixed;
-  bottom: 24px;
-  right: calc(50% - 280px + 16px);
-  background: var(--purple);
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(123,104,238,0.4);
-  transition: transform 0.15s;
-  z-index: 8;
-}
-.fab:hover { transform: translateY(-2px); }
-@media (max-width: 560px) { .fab { right: 16px; } }
+  <!-- 모달 오버레이 -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()" id="modal-body"></div>
+  </div>
 
-/* 폼 카드 */
-.form-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-.form-section { margin-bottom: 16px; }
-.form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
-.form-input {
-  width: 100%;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 9px 12px;
-  font-size: 14px;
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
-  margin-bottom: 8px;
-  font-family: inherit;
-}
-.form-input:focus { border-color: var(--purple); }
-textarea.form-input { resize: none; min-height: 72px; line-height: 1.6; }
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
 
-/* 토글 그룹 */
-.toggle-group { display: flex; gap: 6px; margin-bottom: 8px; }
-.toggle-btn {
-  flex: 1;
-  padding: 8px 4px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text2);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.12s;
-}
-.toggle-btn.active-buy { background: var(--green-bg); color: var(--green); border-color: var(--green); }
-.toggle-btn.active-sell { background: var(--red-bg); color: var(--red); border-color: var(--red); }
-.toggle-btn.active-core { background: var(--purple-bg); color: var(--purple); border-color: var(--purple); }
-.toggle-btn.active-trade { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
-.toggle-btn.active-watch { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
-.toggle-btn.active-cold { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
-.toggle-btn.active-warn { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
-.toggle-btn.active-hot { background: var(--red-bg); color: var(--red); border-color: var(--red); }
-.toggle-btn.active-conv { background: var(--purple-bg); color: var(--purple); border-color: var(--purple); }
+  <!-- ⑤ 스와이프 탭 전환 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initTheme === 'function') initTheme();
+      if (typeof requestNotificationPermission === 'function') requestNotificationPermission();
+    });
+    const TAB_ORDER = ['entry','portfolio','watchlist','review','stats','diary'];
+    let touchStartX = 0, touchStartY = 0;
 
-/* 가격 그리드 */
-.price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-.price-cell { background: var(--bg3); border-radius: var(--radius-sm); padding: 8px 10px; }
-.price-cell-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
-.price-cell input {
-  border: none; background: transparent; font-size: 14px; font-weight: 600;
-  width: 100%; color: var(--text); font-family: inherit; outline: none;
-}
+    // 전체 화면에서 스와이프 감지 (헤더/탭바 제외한 콘텐츠 영역)
+    document.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
 
-/* R/R 표시 */
-.rr-line { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
-.rr-ok { color: var(--green); font-weight: 600; }
-.rr-bad { color: var(--red); font-weight: 600; }
-
-/* 체크리스트 */
-.checklist { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
-.check-row {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--text2);
-  padding: 7px 10px;
-  background: var(--bg3);
-  border-radius: var(--radius-sm);
-}
-.ck {
-  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 700;
-}
-.ck.ok { background: var(--green); color: #fff; }
-.ck.no { background: var(--bg2); border: 1px solid var(--border2); }
-.ck.wn { background: var(--amber); color: #fff; }
-
-/* 제출 버튼 */
-.submit-btn {
-  width: 100%; padding: 13px; border-radius: var(--radius);
-  border: none; font-size: 14px; font-weight: 600; cursor: pointer;
-  transition: all 0.15s;
-}
-.submit-locked { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
-.submit-buy { background: var(--green); color: #fff; }
-.submit-sell { background: var(--red); color: #fff; }
-.submit-watch { background: var(--amber); color: #fff; }
-
-/* 모달 */
-.modal-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 100;
-  align-items: flex-end;
-  justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-.modal {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: 20px 20px 0 0;
-  padding: 20px 16px 32px;
-  width: 100%;
-  max-width: 560px;
-  max-height: 88vh;
-  overflow-y: auto;
-}
-.modal-title {
-  font-size: 16px; font-weight: 600;
-  margin-bottom: 16px; padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* 복기 카드 */
-.review-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 10px;
-}
-.review-outcome { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-.review-qa { margin-top: 10px; }
-.review-q { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
-.review-a { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.5; }
-
-/* 빈 상태 */
-.empty { text-align: center; padding: 40px 0; color: var(--text3); font-size: 13px; }
-
-/* 구분선 */
-.divider { height: 1px; background: var(--border); margin: 14px 0; }
-
-
-  28%   { transform: translateY(0); }
-  38%   { transform: translateY(-66px); }
-  61%   { transform: translateY(-66px); }
-  71%   { transform: translateY(-132px); }
-  95%   { transform: translateY(-132px); }
-  100%  { transform: translateY(-198px); }
-}
-
-@media (max-width: 400px) {
-  .price-grid { grid-template-columns: 1fr 1fr; }
-  .summary-grid { grid-template-columns: 1fr 1fr; }
-}
-
-/* ── 통계 ──────────────────────────────────────────────────── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.stat-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 10px;
-  text-align: center;
-}
-.stat-label { font-size: 10px; color: var(--text3); margin-bottom: 5px; }
-.stat-val { font-size: 16px; font-weight: 700; color: var(--text); }
-
-.month-chart { display: flex; flex-direction: column; gap: 6px; }
-.month-bar-wrap { display: flex; align-items: center; gap: 8px; }
-.month-bar-label { font-size: 11px; color: var(--text3); width: 24px; flex-shrink: 0; }
-.month-bar-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
-.month-bar-fill { height: 100%; border-radius: 4px; }
-.month-bar-val { font-size: 11px; font-weight: 600; width: 80px; text-align: right; flex-shrink: 0; }
-
-/* ── 일기 ──────────────────────────────────────────────────── */
-.diary-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.diary-card:hover { border-color: var(--border2); }
-
-/* ── 탭 스크롤 ─────────────────────────────────────────────── */
-.tabs {
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  white-space: nowrap;
-  display: flex;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab { flex-shrink: 0; }
-
-
-/* ── 라이트모드 ─────────────────────────────────────────────── */
-body.light {
-  --bg: #f4f4f8;
-  --bg2: #ffffff;
-  --bg3: #ebebf0;
-  --border: rgba(0,0,0,0.08);
-  --border2: rgba(0,0,0,0.14);
-  --text: #1a1a2e;
-  --text2: #5a5a72;
-  --text3: #9090a8;
-}
-
-/* ── 다크/라이트 토글 버튼 ──────────────────────────────────── */
-.theme-toggle {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 5px 10px;
-  font-size: 14px;
-  cursor: pointer;
-  color: var(--text2);
-  transition: all 0.15s;
-}
-
-/* ── 탭 크기 개선 ───────────────────────────────────────────── */
-.tab {
-  flex-shrink: 0;
-  padding: 11px 14px;
-  font-size: 13px;
-}
-
-/* ── 스켈레톤 로딩 ──────────────────────────────────────────── */
-.skeleton-wrap { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
-.skeleton {
-  height: 16px;
-  width: 100%;
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  border-radius: 8px;
-  animation: shimmer 1.4s infinite;
-}
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ── 포지션 정렬 버튼 ───────────────────────────────────────── */
-.sort-bar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.sort-btn {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text3);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-.sort-btn.active { background: var(--purple-bg); color: var(--purple); border-color: var(--purple); }
+    document.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      // 수평 스와이프만 처리 (세로 스크롤과 구분)
+      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+      // 모달 열려있으면 스와이프 무시
+      if (document.getElementById('modal-overlay').classList.contains('open')) return;
+      const activeTab = document.querySelector('.tab.active')?.dataset?.tab;
+      const idx = TAB_ORDER.indexOf(activeTab);
+      const nextIdx = dx < 0 ? Math.min(idx + 1, TAB_ORDER.length - 1) : Math.max(idx - 1, 0);
+      if (nextIdx !== idx) {
+        const nextTab = document.querySelector(`.tab[data-tab="${TAB_ORDER[nextIdx]}"]`);
+        if (nextTab) nextTab.click();
+      }
+    }, { passive: true });
+  </script>
+</body>
+</html>
