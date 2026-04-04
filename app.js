@@ -398,9 +398,25 @@ async function closePosition(id) {
     name: p.name, type: p.type, entry: p.entry, exit: exitPrice, qty: p.qty,
     thesis: p.thesis, entry_date: p.date, exit_date: todayStr(),
     pnl_pct: calcPnlPct(p.entry, exitPrice), pnl_amt: calcPnlAmt(p.entry, exitPrice, p.qty),
+    position_id: id,
   });
   await sb.update('positions', id, { status: 'closed' });
   closeModal(); renderPortfolio(); renderReview();
+}
+
+// 포지션으로 복귀 (매도 취소)
+async function restorePosition(reviewId, positionId) {
+  if (!confirm('매도를 취소하고 포지션으로 복귀할까요?')) return;
+  await sb.delete('reviews', reviewId);
+  await sb.update('positions', positionId, { status: 'open' });
+  closeModal();
+  renderPortfolio();
+  renderReview();
+  // 보유 포지션 탭으로 이동
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-tab="portfolio"]').classList.add('active');
+  document.getElementById('tab-portfolio').classList.add('active');
 }
 
 // ── 관심 종목 ─────────────────────────────────────────────────
@@ -767,6 +783,11 @@ async function openReviewDetail(id) {
       <button class="submit-btn submit-buy" style="flex:2" onclick="saveReviewDetail(${id})">복기 저장</button>
       <button class="submit-btn" style="flex:1;background:transparent;color:var(--text3);border:1px solid var(--border)" onclick="deleteReview(${id})">삭제</button>
     </div>
+    ${r.position_id ? `
+    <div class="divider"></div>
+    <button class="submit-btn" style="background:var(--amber-bg);color:var(--amber);border:1px solid rgba(240,160,48,0.3)" onclick="restorePosition(${id}, ${r.position_id})">
+      ↩ 매도 취소 — 포지션으로 복귀
+    </button>` : ''}
   `;
   openModal();
 }
