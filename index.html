@@ -26,6 +26,7 @@
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="today" id="today-date"></span>
           <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">☀️</button>
+          <button onclick="openSettingsModal()" style="background:var(--bg3,#1e1e28);border:1px solid rgba(255,255,255,0.08);color:#9090a8;font-size:13px;padding:5px 8px;border-radius:20px;cursor:pointer" title="설정">⚙️</button>
           <button onclick="signOut()" style="display:flex; align-items:center; gap:5px; background:rgba(240,96,96,0.1); border:1px solid rgba(240,96,96,0.25); color:#f06060; font-size:11px; font-weight:600; cursor:pointer; padding:5px 10px; border-radius:20px; transition:all 0.15s;" onmouseover="this.style.background='rgba(240,96,96,0.2)'" onmouseout="this.style.background='rgba(240,96,96,0.1)'">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f06060" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             로그아웃
@@ -109,8 +110,10 @@
 
   <!-- ⑤ 스와이프 탭 전환 -->
   <script>
-    initTheme();
-    requestNotificationPermission();
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initTheme === 'function') initTheme();
+      if (typeof requestNotificationPermission === 'function') requestNotificationPermission();
+    });
     const TAB_ORDER = ['entry','portfolio','watchlist','review','stats','diary'];
     let touchStartX = 0, touchStartY = 0;
 
