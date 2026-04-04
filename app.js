@@ -170,58 +170,26 @@ function drawWinRateRing(wins, losses) {
 
 // ── 종목 비중 도넛 차트 ────────────────────────────────────────
 function drawDonutChart(positions) {
-  const canvas = document.getElementById('donut-chart');
-  if (!canvas || positions.length === 0) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const S = 80;
-  canvas.width = S * dpr; canvas.height = S * dpr;
-  canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
-  ctx.scale(dpr, dpr);
-  const cx = S / 2, cy = S / 2, R = 34, r = 20;
+  const el = document.getElementById('donut-chart');
+  if (!el || positions.length === 0) return;
   const total = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
   if (!total) return;
   const COLORS = ['#7b68ee','#4caf7d','#5090e0','#f0a030','#f06060','#e06be0','#60c0d0'];
   const sorted = [...positions].sort((a, b) => (b.current_price * b.qty) - (a.current_price * a.qty));
-  let start = -Math.PI / 2;
-  sorted.forEach((p, i) => {
-    const slice = (p.current_price * p.qty) / total * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(cx + R * Math.cos(start), cy + R * Math.sin(start));
-    ctx.arc(cx, cy, R, start, start + slice);
-    ctx.arc(cx, cy, r, start + slice, start, true);
-    ctx.closePath();
-    ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
-    ctx.strokeStyle = 'var(--bg2,#17171f)'; ctx.lineWidth = 2; ctx.stroke();
-    start += slice;
-  });
-  ctx.beginPath(); ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
-  ctx.fillStyle = 'var(--bg2,#17171f)'; ctx.fill();
-  ctx.fillStyle = '#9090a8';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.font = 'bold ' + (9 * dpr) + 'px -apple-system,sans-serif';
-  ctx.scale(1 / dpr, 1 / dpr);
-  ctx.fillText(positions.length + '종목', cx * dpr, cy * dpr);
-  const legend = document.getElementById('donut-legend');
-  if (!legend) return;
-  const top3 = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
-  const restPct = rest.reduce((s, p) => s + (p.current_price * p.qty) / total * 100, 0);
-  legend.innerHTML = [
-    ...top3.map((p, i) => {
-      const pct = ((p.current_price * p.qty) / total * 100).toFixed(1);
-      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">' +
-        '<div style="display:flex;align-items:center;gap:4px;min-width:0">' +
-        '<div style="width:7px;height:7px;border-radius:2px;background:' + COLORS[i] + ';flex-shrink:0"></div>' +
-        '<span style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.name + '</span></div>' +
-        '<span style="font-size:11px;font-weight:700;color:' + COLORS[i] + ';flex-shrink:0">' + pct + '%</span></div>';
-    }),
-    rest.length ? '<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">' +
-      '<div style="display:flex;align-items:center;gap:4px;min-width:0">' +
-      '<div style="width:7px;height:7px;border-radius:2px;background:#5a5a72;flex-shrink:0"></div>' +
-      '<span style="font-size:11px;color:var(--text3)">기타 ' + rest.length + '종목</span></div>' +
-      '<span style="font-size:11px;font-weight:700;color:#5a5a72;flex-shrink:0">' + restPct.toFixed(1) + '%</span></div>' : ''
-  ].join('');
+  el.innerHTML = sorted.map((p, i) => {
+    const pct = (p.current_price * p.qty / total * 100);
+    const pctStr = pct.toFixed(1);
+    const color = COLORS[i % COLORS.length];
+    return '<div style="margin-bottom:7px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">' +
+      '<span style="font-size:11px;color:var(--text)">' + p.name + '</span>' +
+      '<span style="font-size:11px;font-weight:700;color:' + color + '">' + pctStr + '%</span>' +
+      '</div>' +
+      '<div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">' +
+      '<div style="height:100%;width:' + pct.toFixed(1) + '%;background:' + color + ';border-radius:3px"></div>' +
+      '</div>' +
+      '</div>';
+  }).join('');
 }
 
 // ── 미니 라인차트 ─────────────────────────────────────────────
@@ -325,7 +293,10 @@ async function renderPortfolio() {
     const sign = d.change >= 0 ? '+' : '';
     const chg = d.change !== null ? sign + d.change.toFixed(2) + '%' : '';
     const priceStr = d.price >= 1000 ? Math.round(d.price).toLocaleString() : d.price.toFixed(2);
-    return '<span style="font-size:11px;font-weight:600;color:' + c + ';white-space:nowrap">' + priceStr + ' <span style="font-size:10px">' + chg + '</span></span>';
+    return '<div style="text-align:right">' +
+      '<span style="font-size:12px;font-weight:700;color:var(--text)">' + priceStr + '</span>' +
+      '<span style="font-size:11px;font-weight:600;color:' + c + ';margin-left:5px">' + chg + '</span>' +
+      '</div>';
   }
 
   document.getElementById('summary-grid').innerHTML = `
@@ -376,10 +347,7 @@ async function renderPortfolio() {
       <div style="display:flex;align-items:center;height:22px;margin-bottom:12px">
         <div class="metric-label" style="margin-bottom:0">종목 비중</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-        <canvas id="donut-chart" width="80" height="80" style="flex-shrink:0"></canvas>
-        <div id="donut-legend" style="width:100%;display:flex;flex-direction:column;gap:4px"></div>
-      </div>
+      <div id="donut-chart" style="width:100%"></div>
     </div>
     <div class="metric" id="index-section" style="overflow:hidden;grid-column:span 2">
       <div class="metric-label" style="margin-bottom:10px">주요 지수</div>
@@ -1056,7 +1024,8 @@ async function autoRefreshIndices() {
     const c = d.change >= 0 ? 'var(--green)' : 'var(--red)';
     const sign = d.change >= 0 ? '+' : '';
     const chg = d.change !== null ? sign + d.change.toFixed(2) + '%' : '';
-    cell.innerHTML = '<span style="font-size:13px;font-weight:600;color:' + c + '">' + d.price.toLocaleString() + ' <span style="font-size:11px">' + chg + '</span></span>';
+    const priceStr = d.price >= 1000 ? Math.round(d.price).toLocaleString() : d.price.toFixed(2);
+    cell.innerHTML = '<div style="text-align:right"><span style="font-size:12px;font-weight:700;color:var(--text)">' + priceStr + '</span><span style="font-size:11px;font-weight:600;color:' + c + ';margin-left:5px">' + chg + '</span></div>';
   });
 }
 
@@ -1284,8 +1253,9 @@ async function exportCSV() {
 // ⑧ 다크/라이트 모드
 // ════════════════════════════════════════════════════════════════
 function initTheme() {
-  const saved = localStorage.getItem('theme') || 'dark';
-  applyTheme(saved);
+  const saved = localStorage.getItem('theme');
+  // 명시적으로 light를 선택한 경우만 라이트모드, 나머지는 다크
+  applyTheme(saved === 'light' ? 'light' : 'dark');
 }
 
 function applyTheme(theme) {
