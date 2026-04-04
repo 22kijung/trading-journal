@@ -199,82 +199,83 @@ async function renderPortfolio() {
     </div>
     <div class="metric" id="index-section" style="overflow:hidden">
       <div class="metric-label" style="margin-bottom:8px">주요 지수</div>
-      <div style="overflow:hidden;height:44px;position:relative;margin-top:2px">
-        <div id="idx-ticker" style="display:flex;flex-direction:column;gap:0;animation:tickerScroll 18s linear infinite">
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">KOSPI</span>
-            <span id="idx-kospi">${idxHtml('kospi')}</span>
+      <div style="overflow:hidden;height:66px;position:relative;margin-top:2px">
+        <div id="idx-ticker" style="display:flex;flex-direction:column;gap:0;animation:tickerScroll 9s linear infinite">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">KOSPI</span>
+            <span id="idx-kospi" style="font-size:12px;text-align:right">${idxHtml('kospi')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">KOSDAQ</span>
-            <span id="idx-kosdaq">${idxHtml('kosdaq')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">KOSDAQ</span>
+            <span id="idx-kosdaq" style="font-size:12px;text-align:right">${idxHtml('kosdaq')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">S&P 500</span>
-            <span id="idx-sp500">${idxHtml('sp500')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">S&P 500</span>
+            <span id="idx-sp500" style="font-size:12px;text-align:right">${idxHtml('sp500')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">다우존스</span>
-            <span id="idx-dji">${idxHtml('dji')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">다우존스</span>
+            <span id="idx-dji" style="font-size:12px;text-align:right">${idxHtml('dji')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">나스닥</span>
-            <span id="idx-ixic">${idxHtml('ixic')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">나스닥</span>
+            <span id="idx-ixic" style="font-size:12px;text-align:right">${idxHtml('ixic')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">원/달러</span>
-            <span id="idx-krw">${idxHtml('krw')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">원/달러</span>
+            <span id="idx-krw" style="font-size:12px;text-align:right">${idxHtml('krw')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">유가 WTI</span>
-            <span id="idx-wti">${idxHtml('wti')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">유가 WTI</span>
+            <span id="idx-wti" style="font-size:12px;text-align:right">${idxHtml('wti')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">금</span>
-            <span id="idx-gold">${idxHtml('gold')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">금</span>
+            <span id="idx-gold" style="font-size:12px;text-align:right">${idxHtml('gold')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">비트코인</span>
-            <span id="idx-btc">${idxHtml('btc')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">비트코인</span>
+            <span id="idx-btc" style="font-size:12px;text-align:right">${idxHtml('btc')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">KOSPI</span>
-            <span>${idxHtml('kospi')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">KOSPI</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('kospi')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">KOSDAQ</span>
-            <span>${idxHtml('kosdaq')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">KOSDAQ</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('kosdaq')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">S&P 500</span>
-            <span>${idxHtml('sp500')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">S&P 500</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('sp500')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">다우존스</span>
-            <span>${idxHtml('dji')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">다우존스</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('dji')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">나스닥</span>
-            <span>${idxHtml('ixic')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">나스닥</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('ixic')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">원/달러</span>
-            <span>${idxHtml('krw')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">원/달러</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('krw')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">유가 WTI</span>
-            <span>${idxHtml('wti')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">유가 WTI</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('wti')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">금</span>
-            <span>${idxHtml('gold')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">금</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('gold')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <span style="font-size:11px;color:var(--text2)">비트코인</span>
-            <span>${idxHtml('btc')}</span>
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:0 2px">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;min-width:52px">비트코인</span>
+            <span  style="font-size:12px;text-align:right">${idxHtml('btc')}</span>
           </div>
         </div>
       </div>
+    </div>
     </div>
   `;
 
