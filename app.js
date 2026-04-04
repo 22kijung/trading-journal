@@ -178,140 +178,135 @@ async function renderPortfolio() {
   }
 
   document.getElementById('summary-grid').innerHTML = `
-    <div class="metric">
-      <div class="metric-label">총 평가손익</div>
-      <div class="metric-val ${pnlClass(totalPnl)}" style="font-size:20px;font-weight:700;margin-top:6px">${fmtNum(totalPnl)}원</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">총 수익률</div>
-      <div style="font-size:20px;font-weight:700;color:${pctColor};margin-top:6px">${fmtPct(totalPct)}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">총 투자금</div>
-      <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:6px">${fmtNum(totalInvest)}원</div>
-    </div>
-    <div class="metric" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px">
-      <div class="metric-label" style="margin-bottom:6px;align-self:flex-start">종목 비중</div>
-      <canvas id="donut-chart" width="90" height="90"></canvas>
-    </div>
-    <div class="metric" style="grid-column: span 2">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div class="metric" style="grid-column:span 2;padding:14px 16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
           <div class="metric-label">총 평가금액</div>
-          <div style="font-size:22px;font-weight:700;color:var(--text);margin-top:4px">${fmtNum(totalMarketVal)}원</div>
-          ${dayChange !== null ? `<div style="font-size:12px;margin-top:4px;color:${dayChange>=0?'var(--green)':'var(--red)'}">
-            전날 대비 ${dayChange>=0?'+':''}${fmtNum(dayChange)}원 (${dayChangePct>=0?'+':''}${dayChangePct.toFixed(2)}%)
-          </div>` : '<div style="font-size:11px;color:var(--text3);margin-top:4px">전날 데이터 수집 중...</div>'}
+          <div style="font-size:26px;font-weight:700;color:var(--text);margin-top:4px;letter-spacing:-.5px">${fmtNum(totalMarketVal)}원</div>
+          ${dayChange !== null ? `<div style="font-size:12px;font-weight:600;margin-top:4px;color:${dayChange>=0?'var(--green)':'var(--red)'}">전날 대비 ${dayChange>=0?'+':''}${fmtNum(dayChange)}원 (${dayChangePct>=0?'+':''}${dayChangePct.toFixed(2)}%)</div>` : '<div style="font-size:11px;color:var(--text3);margin-top:4px">전날 데이터 수집 중...</div>'}
         </div>
-        <canvas id="portfolio-chart" width="120" height="48" style="margin-top:4px"></canvas>
+        <canvas id="portfolio-chart" width="96" height="38" style="margin-top:4px;flex-shrink:0"></canvas>
+      </div>
+      <div style="display:flex;gap:0;border-top:1px solid var(--border);padding-top:10px">
+        <div style="flex:1;padding-right:10px">
+          <div class="metric-label" style="margin-bottom:2px">평가손익</div>
+          <div style="font-size:14px;font-weight:700;color:${pnlClass(totalPnl)==='pos'?'var(--green)':'var(--red)'}">${fmtNum(totalPnl)}원</div>
+        </div>
+        <div style="flex:1;padding:0 10px;border-left:1px solid var(--border)">
+          <div class="metric-label" style="margin-bottom:2px">수익률</div>
+          <div style="font-size:14px;font-weight:700;color:${pctColor}">${fmtPct(totalPct)}</div>
+        </div>
+        <div style="flex:1;padding-left:10px;border-left:1px solid var(--border)">
+          <div class="metric-label" style="margin-bottom:2px">투자금</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${fmtNum(totalInvest)}원</div>
+        </div>
       </div>
     </div>
-    <div class="metric">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="metric" style="padding:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;height:22px">
         <div class="metric-label" style="margin-bottom:0">종목 현황</div>
         <button id="refresh-btn" onclick="refreshAllPrices()" style="background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer">현재가 갱신</button>
       </div>
-      <div style="display:flex;gap:8px;margin-top:2px">
-        <div style="flex:1;border-radius:8px;background:rgba(76,175,125,0.08);padding:7px 10px">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:3px">수익</div>
-          <div style="display:flex;align-items:center;gap:5px">
-            <span style="font-size:12px;color:var(--green)">▲</span>
-            <span style="font-size:20px;font-weight:700;color:var(--green)">${posCount}</span>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <canvas id="win-rate-ring" width="80" height="80"></canvas>
+        <div style="display:flex;gap:5px;width:100%">
+          <div style="flex:1;text-align:center;padding:7px 4px;background:rgba(76,175,125,0.1);border-radius:8px">
+            <div style="font-size:9px;color:var(--green);margin-bottom:2px">수익</div>
+            <div style="font-size:24px;font-weight:700;color:var(--green);line-height:1">${posCount}</div>
           </div>
-        </div>
-        <div style="flex:1;border-radius:8px;background:rgba(240,96,96,0.08);padding:7px 10px">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:3px">손실</div>
-          <div style="display:flex;align-items:center;gap:5px">
-            <span style="font-size:12px;color:var(--red)">▼</span>
-            <span style="font-size:20px;font-weight:700;color:var(--red)">${negCount}</span>
+          <div style="flex:1;text-align:center;padding:7px 4px;background:rgba(240,96,96,0.1);border-radius:8px">
+            <div style="font-size:9px;color:var(--red);margin-bottom:2px">손실</div>
+            <div style="font-size:24px;font-weight:700;color:var(--red);line-height:1">${negCount}</div>
           </div>
         </div>
       </div>
     </div>
-    <div class="metric" id="index-section" style="overflow:hidden">
-      <div class="metric-label" style="margin-bottom:8px">주요 지수</div>
-      <div style="overflow:hidden;height:66px;position:relative;margin-top:2px">
-        <div id="idx-ticker" style="display:flex;flex-direction:column;gap:0;animation:tickerScroll 9s linear infinite">
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">KOSPI</span>
-            <span id="idx-kospi" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('kospi')}</span>
+    <div class="metric" style="padding:12px">
+      <div style="display:flex;align-items:center;height:22px;margin-bottom:12px">
+        <div class="metric-label" style="margin-bottom:0">종목 비중</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <canvas id="donut-chart" width="80" height="80" style="flex-shrink:0"></canvas>
+        <div id="donut-legend" style="width:100%;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+    </div>
+    <div class="metric" id="index-section" style="overflow:hidden;grid-column:span 2">
+      <div class="metric-label" style="margin-bottom:10px">주요 지수</div>
+      <div style="overflow:hidden;height:66px">
+        <div id="idx-ticker" style="display:flex;flex-direction:column;transition:transform .5s ease">
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">KOSPI</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-kospi">${idxHtml('kospi')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">KOSDAQ</span>
-            <span id="idx-kosdaq" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('kosdaq')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">KOSDAQ</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-kosdaq">${idxHtml('kosdaq')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">S&P 500</span>
-            <span id="idx-sp500" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('sp500')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">S&P 500</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-sp500">${idxHtml('sp500')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">다우존스</span>
-            <span id="idx-dji" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('dji')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">다우존스</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-dji">${idxHtml('dji')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">나스닥</span>
-            <span id="idx-ixic" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('ixic')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">나스닥</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-ixic">${idxHtml('ixic')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">원/달러</span>
-            <span id="idx-krw" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('krw')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">원/달러</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-krw">${idxHtml('krw')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">유가 WTI</span>
-            <span id="idx-wti" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('wti')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">유가 WTI</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-wti">${idxHtml('wti')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">금</span>
-            <span id="idx-gold" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('gold')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">금</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-gold">${idxHtml('gold')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">비트코인</span>
-            <span id="idx-btc" style="text-align:right;min-width:0;overflow:hidden">${idxHtml('btc')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">비트코인</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right" id="idx-btc">${idxHtml('btc')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">KOSPI</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('kospi')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">KOSPI</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right">${idxHtml('kospi')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">KOSDAQ</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('kosdaq')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">KOSDAQ</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right">${idxHtml('kosdaq')}</span>
           </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">S&P 500</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('sp500')}</span>
-          </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">다우존스</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('dji')}</span>
-          </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">나스닥</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('ixic')}</span>
-          </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">원/달러</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('krw')}</span>
-          </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">유가 WTI</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('wti')}</span>
-          </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">금</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('gold')}</span>
-          </div>
-          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:4px;min-width:0">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0">비트코인</span>
-            <span style="text-align:right;min-width:0;overflow:hidden">${idxHtml('btc')}</span>
+          <div style="height:22px;display:flex;align-items:center;gap:0">
+            <span style="font-size:11px;color:var(--text2);width:64px;flex-shrink:0">S&P 500</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;text-align:right">${idxHtml('sp500')}</span>
           </div>
         </div>
       </div>
-    </div>
     </div>
   `;
 
+  // 3개씩 슬라이드 인터벌
+  if (window._idxTimer) clearInterval(window._idxTimer);
+  let _idxGrp = 0;
+  window._idxTimer = setInterval(() => {
+    const el = document.getElementById('idx-ticker');
+    if (!el) { clearInterval(window._idxTimer); return; }
+    _idxGrp++;
+    if (_idxGrp >= 3) {
+      _idxGrp = 0;
+      setTimeout(() => { el.style.transition='none'; el.style.transform='translateY(0)'; }, 500);
+    } else {
+      el.style.transition = 'transform .5s ease';
+      el.style.transform = \`translateY(-\${_idxGrp * 66}px)\`;
+    }
+  }, 3000);
+
   // 미니 라인차트 그리기
   drawPortfolioChart(snapshots, totalMarketVal);
+  // 승률 링
+  drawWinRateRing(posCount, negCount);
   // 종목 비중 도넛 차트
   drawDonutChart(positions);
 
@@ -1378,28 +1373,24 @@ async function renderPortfolioGraph() {
 
 
 // ════════════════════════════════════════════════════════════════
-// 종목 비중 도넛 차트
+// 종목 비중 도넛 차트 (개선)
 // ════════════════════════════════════════════════════════════════
 function drawDonutChart(positions) {
   const canvas = document.getElementById('donut-chart');
   if (!canvas || positions.length === 0) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const SIZE = 90;
-  canvas.width = SIZE * dpr; canvas.height = SIZE * dpr;
-  canvas.style.width = SIZE + 'px'; canvas.style.height = SIZE + 'px';
+  const S = 80;
+  canvas.width = S * dpr; canvas.height = S * dpr;
+  canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
   ctx.scale(dpr, dpr);
-
-  const cx = SIZE / 2, cy = SIZE / 2;
-  const R = 36, r = 22; // 외/내 반지름
+  const cx = S / 2, cy = S / 2, R = 34, r = 20;
   const total = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
   if (!total) return;
-
   const COLORS = ['#7b68ee','#4caf7d','#5090e0','#f0a030','#f06060','#e06be0','#60c0d0','#90c060'];
-
-  // 파이 조각 그리기
+  const sorted = [...positions].sort((a, b) => (b.current_price * b.qty) - (a.current_price * a.qty));
   let startAngle = -Math.PI / 2;
-  positions.forEach((p, i) => {
+  sorted.forEach((p, i) => {
     const weight = (p.current_price * p.qty) / total;
     const slice = weight * Math.PI * 2;
     ctx.beginPath();
@@ -1409,56 +1400,41 @@ function drawDonutChart(positions) {
     ctx.closePath();
     ctx.fillStyle = COLORS[i % COLORS.length];
     ctx.fill();
-    // 조각 사이 간격
     ctx.strokeStyle = 'var(--bg2, #17171f)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    ctx.lineWidth = 2; ctx.stroke();
     startAngle += slice;
   });
-
-  // 중앙 원 (도넛 홀)
-  ctx.beginPath();
-  ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
-  ctx.fillStyle = 'var(--bg2, #17171f)';
-  ctx.fill();
-
-  // 중앙 텍스트 - 종목 수
-  ctx.fillStyle = '#e8e8f0';
-  ctx.font = `bold ${11 * dpr}px -apple-system,sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.beginPath(); ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
+  ctx.fillStyle = 'var(--bg2, #17171f)'; ctx.fill();
+  ctx.fillStyle = '#9090a8';
+  ctx.font = `bold ${9 * dpr}px -apple-system,sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.scale(1 / dpr, 1 / dpr);
   ctx.fillText(positions.length + '종목', cx * dpr, cy * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // 범례 (canvas 아래에 별도 div로 추가)
-  const parent = canvas.parentElement;
-  let legend = parent.querySelector('.donut-legend');
-  if (!legend) {
-    legend = document.createElement('div');
-    legend.className = 'donut-legend';
-    legend.style.cssText = 'width:100%;margin-top:6px';
-    parent.appendChild(legend);
-  }
-  // 상위 3개만 표시, 나머지는 기타
-  const sorted = [...positions].sort((a, b) => (b.current_price * b.qty) - (a.current_price * a.qty));
-  const top = sorted.slice(0, 3);
+  // 범례: 색상으로 퍼센트 강조
+  const legend = document.getElementById('donut-legend');
+  if (!legend) return;
+  const top3 = sorted.slice(0, 3);
   const rest = sorted.slice(3);
-  const restWeight = rest.reduce((s, p) => s + (p.current_price * p.qty) / total * 100, 0);
-
+  const restPct = rest.reduce((s, p) => s + (p.current_price * p.qty) / total * 100, 0);
   legend.innerHTML = [
-    ...top.map((p, i) => {
+    ...top3.map((p, i) => {
       const pct = ((p.current_price * p.qty) / total * 100).toFixed(1);
-      return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
-        <div style="width:7px;height:7px;border-radius:50%;background:${COLORS[i]};flex-shrink:0"></div>
-        <span style="font-size:10px;color:var(--text2,#9090a8);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
-        <span style="font-size:10px;font-weight:600;color:var(--text,#e8e8f0)">${pct}%</span>
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">
+        <div style="display:flex;align-items:center;gap:4px;min-width:0">
+          <div style="width:7px;height:7px;border-radius:2px;background:${COLORS[i]};flex-shrink:0"></div>
+          <span style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:${COLORS[i]};flex-shrink:0">${pct}%</span>
       </div>`;
     }),
-    rest.length > 0 ? `<div style="display:flex;align-items:center;gap:4px">
-      <div style="width:7px;height:7px;border-radius:50%;background:#5a5a72;flex-shrink:0"></div>
-      <span style="font-size:10px;color:var(--text2,#9090a8);flex:1">기타 ${rest.length}종목</span>
-      <span style="font-size:10px;font-weight:600;color:var(--text,#e8e8f0)">${restWeight.toFixed(1)}%</span>
+    rest.length ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:5px">
+      <div style="display:flex;align-items:center;gap:4px;min-width:0">
+        <div style="width:7px;height:7px;border-radius:2px;background:#5a5a72;flex-shrink:0"></div>
+        <span style="font-size:11px;color:var(--text3)">기타 ${rest.length}종목</span>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:#5a5a72;flex-shrink:0">${restPct.toFixed(1)}%</span>
     </div>` : ''
   ].join('');
 }
