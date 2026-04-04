@@ -174,20 +174,19 @@ async function renderPortfolio() {
         <div class="metric-label" style="margin-bottom:0">종목 현황</div>
         <button id="refresh-btn" onclick="refreshAllPrices()" style="background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer">현재가 갱신</button>
       </div>
-      <div style="display:flex;height:54px">
-        <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(76,175,125,0.08)">
-          <div style="font-size:16px;font-weight:700;color:var(--green)">▲</div>
-          <div>
-            <div style="font-size:20px;font-weight:700;color:var(--green)">${posCount}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">수익</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;border-radius:8px;background:rgba(76,175,125,0.08);padding:10px 12px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">수익</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:14px;color:var(--green)">▲</span>
+            <span style="font-size:22px;font-weight:700;color:var(--green)">${posCount}</span>
           </div>
         </div>
-        <div style="width:1px;background:var(--border);margin:4px 6px"></div>
-        <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(240,96,96,0.08)">
-          <div style="font-size:16px;font-weight:700;color:var(--red)">▼</div>
-          <div>
-            <div style="font-size:20px;font-weight:700;color:var(--red)">${negCount}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">손실</div>
+        <div style="flex:1;border-radius:8px;background:rgba(240,96,96,0.08);padding:10px 12px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">손실</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:14px;color:var(--red)">▼</span>
+            <span style="font-size:22px;font-weight:700;color:var(--red)">${negCount}</span>
           </div>
         </div>
       </div>
