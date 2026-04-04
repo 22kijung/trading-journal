@@ -191,20 +191,34 @@ async function renderPortfolio() {
         </div>
       </div>
     </div>
-    <div class="metric" id="index-section">
+    <div class="metric" id="index-section" style="overflow:hidden">
       <div class="metric-label" style="margin-bottom:8px">주요 지수</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">KOSPI</div>
-          <span id="idx-kospi">${idxHtml('kospi')}</span>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">KOSDAQ</div>
-          <span id="idx-kosdaq">${idxHtml('kosdaq')}</span>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">S&P 500</div>
-          <span id="idx-sp500">${idxHtml('sp500')}</span>
+      <div style="overflow:hidden;height:54px;position:relative">
+        <div id="idx-ticker" style="display:flex;flex-direction:column;gap:0;animation:tickerScroll 6s linear infinite">
+          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text2)">KOSPI</span>
+            <span id="idx-kospi">${idxHtml('kospi')}</span>
+          </div>
+          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text2)">KOSDAQ</span>
+            <span id="idx-kosdaq">${idxHtml('kosdaq')}</span>
+          </div>
+          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text2)">S&P 500</span>
+            <span id="idx-sp500">${idxHtml('sp500')}</span>
+          </div>
+          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text2)">KOSPI</span>
+            <span>${idxHtml('kospi')}</span>
+          </div>
+          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text2)">KOSDAQ</span>
+            <span>${idxHtml('kosdaq')}</span>
+          </div>
+          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text2)">S&P 500</span>
+            <span>${idxHtml('sp500')}</span>
+          </div>
         </div>
       </div>
     </div>
