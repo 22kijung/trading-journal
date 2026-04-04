@@ -190,6 +190,10 @@ async function renderPortfolio() {
       <div class="metric-label">총 투자금</div>
       <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:6px">${fmtNum(totalInvest)}원</div>
     </div>
+    <div class="metric" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px">
+      <div class="metric-label" style="margin-bottom:6px;align-self:flex-start">종목 비중</div>
+      <canvas id="donut-chart" width="90" height="90"></canvas>
+    </div>
     <div class="metric" style="grid-column: span 2">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
         <div>
@@ -308,6 +312,8 @@ async function renderPortfolio() {
 
   // 미니 라인차트 그리기
   drawPortfolioChart(snapshots, totalMarketVal);
+  // 종목 비중 도넛 차트
+  drawDonutChart(positions);
 
   const listEl = document.getElementById('portfolio-list');
   if (positions.length === 0) {
@@ -1368,4 +1374,91 @@ async function renderPortfolioGraph() {
       <span style="color:${color};font-weight:600">현재 ${fmtNum(vals[vals.length-1])}원</span>
     </div>
   `;
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// 종목 비중 도넛 차트
+// ════════════════════════════════════════════════════════════════
+function drawDonutChart(positions) {
+  const canvas = document.getElementById('donut-chart');
+  if (!canvas || positions.length === 0) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const SIZE = 90;
+  canvas.width = SIZE * dpr; canvas.height = SIZE * dpr;
+  canvas.style.width = SIZE + 'px'; canvas.style.height = SIZE + 'px';
+  ctx.scale(dpr, dpr);
+
+  const cx = SIZE / 2, cy = SIZE / 2;
+  const R = 36, r = 22; // 외/내 반지름
+  const total = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
+  if (!total) return;
+
+  const COLORS = ['#7b68ee','#4caf7d','#5090e0','#f0a030','#f06060','#e06be0','#60c0d0','#90c060'];
+
+  // 파이 조각 그리기
+  let startAngle = -Math.PI / 2;
+  positions.forEach((p, i) => {
+    const weight = (p.current_price * p.qty) / total;
+    const slice = weight * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + R * Math.cos(startAngle), cy + R * Math.sin(startAngle));
+    ctx.arc(cx, cy, R, startAngle, startAngle + slice);
+    ctx.arc(cx, cy, r, startAngle + slice, startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    // 조각 사이 간격
+    ctx.strokeStyle = 'var(--bg2, #17171f)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    startAngle += slice;
+  });
+
+  // 중앙 원 (도넛 홀)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
+  ctx.fillStyle = 'var(--bg2, #17171f)';
+  ctx.fill();
+
+  // 중앙 텍스트 - 종목 수
+  ctx.fillStyle = '#e8e8f0';
+  ctx.font = `bold ${11 * dpr}px -apple-system,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.scale(1 / dpr, 1 / dpr);
+  ctx.fillText(positions.length + '종목', cx * dpr, cy * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // 범례 (canvas 아래에 별도 div로 추가)
+  const parent = canvas.parentElement;
+  let legend = parent.querySelector('.donut-legend');
+  if (!legend) {
+    legend = document.createElement('div');
+    legend.className = 'donut-legend';
+    legend.style.cssText = 'width:100%;margin-top:6px';
+    parent.appendChild(legend);
+  }
+  // 상위 3개만 표시, 나머지는 기타
+  const sorted = [...positions].sort((a, b) => (b.current_price * b.qty) - (a.current_price * a.qty));
+  const top = sorted.slice(0, 3);
+  const rest = sorted.slice(3);
+  const restWeight = rest.reduce((s, p) => s + (p.current_price * p.qty) / total * 100, 0);
+
+  legend.innerHTML = [
+    ...top.map((p, i) => {
+      const pct = ((p.current_price * p.qty) / total * 100).toFixed(1);
+      return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+        <div style="width:7px;height:7px;border-radius:50%;background:${COLORS[i]};flex-shrink:0"></div>
+        <span style="font-size:10px;color:var(--text2,#9090a8);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+        <span style="font-size:10px;font-weight:600;color:var(--text,#e8e8f0)">${pct}%</span>
+      </div>`;
+    }),
+    rest.length > 0 ? `<div style="display:flex;align-items:center;gap:4px">
+      <div style="width:7px;height:7px;border-radius:50%;background:#5a5a72;flex-shrink:0"></div>
+      <span style="font-size:10px;color:var(--text2,#9090a8);flex:1">기타 ${rest.length}종목</span>
+      <span style="font-size:10px;font-weight:600;color:var(--text,#e8e8f0)">${restWeight.toFixed(1)}%</span>
+    </div>` : ''
+  ].join('');
 }
