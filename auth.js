@@ -5,6 +5,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
+let appInitialized = false;
 
 async function initAuth() {
   const { data: { session } } = await _sb.auth.getSession();
@@ -21,6 +22,7 @@ async function initAuth() {
       showApp();
     } else {
       currentUser = null;
+      appInitialized = false;
       showLogin();
     }
   });
@@ -29,7 +31,7 @@ async function initAuth() {
 async function signInWithGoogle() {
   await _sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: window.location.origin }
   });
 }
 
@@ -45,7 +47,10 @@ function showLogin() {
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.querySelector('.app').style.display = 'block';
-  if (typeof initApp === 'function') initApp();
+  if (!appInitialized && typeof initApp === 'function') {
+    initApp();
+    appInitialized = true;
+  }
 }
 
 async function getAuthHeaders() {
