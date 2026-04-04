@@ -74,6 +74,114 @@ async function fetchPrice(name) {
     return data.price || null;
   } catch { return null; }
 }
+let stockSearchTimer = null;
+
+function hideStockSearchResults() {
+  const el = document.getElementById('stock-search-results');
+  if (!el) return;
+  el.innerHTML = '';
+  el.style.display = 'none';
+}
+
+function renderStockSearchResults(items) {
+  const el = document.getElementById('stock-search-results');
+  if (!el) return;
+
+  if (!items || items.length === 0) {
+    el.innerHTML = `
+      <div style="padding:10px 12px;font-size:12px;color:var(--text3)">
+        검색 결과 없음
+      </div>
+    `;
+    el.style.display = 'block';
+    return;
+  }
+
+  el.innerHTML = items.map(item => `
+    <button
+      type="button"
+      onclick="selectStock('${String(item.name).replace(/'/g, "\\'")}', '${item.code}')"
+      style="
+        width:100%;
+        border:none;
+        background:transparent;
+        color:var(--text);
+        text-align:left;
+        padding:10px 12px;
+        cursor:pointer;
+        border-bottom:1px solid var(--border);
+      "
+    >
+      <div style="font-size:13px;font-weight:600">${item.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">
+        ${item.code} · ${item.market || ''}
+      </div>
+    </button>
+  `).join('');
+
+  el.style.display = 'block';
+}
+
+async function searchStocks(keyword) {
+  const q = String(keyword || '').trim();
+
+  if (!q) {
+    hideStockSearchResults();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/search-stock?q=${encodeURIComponent(q)}`);
+    if (!res.ok) throw new Error('search failed');
+
+    const items = await res.json();
+    renderStockSearchResults(items);
+  } catch (err) {
+    console.error(err);
+    hideStockSearchResults();
+  }
+}
+
+function handleStockInput(value) {
+  clearTimeout(stockSearchTimer);
+  stockSearchTimer = setTimeout(() => {
+    searchStocks(value);
+  }, 250);
+}
+
+async function selectStock(name, code) {
+  const nameEl = document.getElementById('e-name');
+  const codeEl = document.getElementById('e-code');
+  const entryEl = document.getElementById('e-entry');
+
+  if (nameEl) nameEl.value = name;
+  if (codeEl) codeEl.value = code;
+
+  SYMBOL_MAP[name] = code;
+  hideStockSearchResults();
+
+  if (entryEl && !entryEl.value) {
+    try {
+      const res = await fetch(`/api/price?symbol=${encodeURIComponent(code)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.price) {
+        entryEl.value = data.price;
+        calcEntryRR();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('[data-stock-search-wrap]');
+  if (!wrap) return;
+  if (!wrap.contains(e.target)) {
+    hideStockSearchResults();
+  }
+});
 
 async function refreshAllPrices() {
   const positions = await sb.get('positions', '&status=eq.open');
