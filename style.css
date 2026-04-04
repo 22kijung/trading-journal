@@ -334,8 +334,7 @@ textarea.form-input { resize: none; min-height: 72px; line-height: 1.6; }
 /* 구분선 */
 .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
-@keyframes tickerScroll {
-  0%    { transform: translateY(0); }
+
   28%   { transform: translateY(0); }
   38%   { transform: translateY(-66px); }
   61%   { transform: translateY(-66px); }
