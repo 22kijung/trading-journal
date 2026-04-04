@@ -306,6 +306,7 @@ async function renderPortfolio() {
         <div class="pos-meta">
           <div class="pos-meta-item">현재가 <span>${fmtNum(p.current_price)}</span></div>
           <div class="pos-meta-item">목표가 <span>${p.target ? fmtNum(p.target) : '—'}</span></div>
+          <div class="pos-meta-item">손절가 <span>${p.stop ? fmtNum(p.stop) : '—'}</span></div>
           <div class="pos-meta-item">확신도 <span>${p.conviction}/5</span></div>
         </div>
         <div class="thesis-box">${p.thesis || ''}</div>
@@ -681,6 +682,7 @@ async function submitEntry() {
       entry: parseFloat(document.getElementById('e-entry').value) || 0,
       qty: parseInt(document.getElementById('e-qty').value) || 0,
       target: parseFloat(document.getElementById('e-target').value) || null,
+      stop: parseFloat(document.getElementById('e-stop').value) || null,
       stop_trigger: document.getElementById('e-trigger').value.trim(),
       thesis: document.getElementById('e-memo').value.trim(),
       conviction: entryState.conv, emotion: entryState.emo,
