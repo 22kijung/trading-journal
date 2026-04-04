@@ -33,40 +33,65 @@
       </div>
     </header>
 
-    <!-- 탭 -->
-    <nav class="tabs">
+    <!-- 탭 (스크롤 가능) -->
+    <nav class="tabs" id="main-tabs">
       <button class="tab" data-tab="entry">진입 체크</button>
       <button class="tab active" data-tab="portfolio">보유 포지션</button>
       <button class="tab" data-tab="watchlist">관심 종목</button>
       <button class="tab" data-tab="review">트레이드 로그</button>
+      <button class="tab" data-tab="stats">통계</button>
+      <button class="tab" data-tab="diary">매매 메모</button>
     </nav>
 
-    <!-- 보유 포지션 -->
-    <section id="tab-portfolio" class="tab-content active">
-      <div class="summary-grid" id="summary-grid"></div>
-      <div class="section-label">포지션 목록</div>
-      <div id="portfolio-list"></div>
-      <button class="fab" onclick="openEntryModal()">+ 신규 매매</button>
-    </section>
+    <!-- 스와이프 컨테이너 -->
+    <div id="swipe-container">
 
-    <!-- 관심 종목 -->
-    <section id="tab-watchlist" class="tab-content">
-      <div class="section-label">매수 조건 대기</div>
-      <div id="watchlist-list"></div>
-      <button class="fab" onclick="openWatchModal()">+ 관심 종목 추가</button>
-    </section>
+      <!-- 진입 체크 -->
+      <section id="tab-entry" class="tab-content">
+        <div class="form-card" id="entry-form"></div>
+      </section>
 
-    <!-- 매매 전 체크 -->
-    <section id="tab-entry" class="tab-content">
-      <div class="form-card" id="entry-form"></div>
-    </section>
+      <!-- 보유 포지션 -->
+      <section id="tab-portfolio" class="tab-content active">
+        <div class="summary-grid" id="summary-grid"></div>
+        <div class="section-label">포지션 목록</div>
+        <div id="portfolio-list"></div>
+        <button class="fab" onclick="openEntryModal()">+ 신규 매매</button>
+      </section>
 
-    <!-- 복기 -->
-    <section id="tab-review" class="tab-content">
-      <div class="section-label">매도 완료 복기</div>
-      <div id="review-list"></div>
-    </section>
+      <!-- 관심 종목 -->
+      <section id="tab-watchlist" class="tab-content">
+        <div class="section-label">매수 조건 대기</div>
+        <div id="watchlist-list"></div>
+        <button class="fab" onclick="openWatchModal()">+ 관심 종목 추가</button>
+      </section>
 
+      <!-- 트레이드 로그 -->
+      <section id="tab-review" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="section-label" style="margin-bottom:0">매도 완료 복기</div>
+          <button onclick="exportCSV()" style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;cursor:pointer;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV 내보내기
+          </button>
+        </div>
+        <div id="review-list"></div>
+      </section>
+
+      <!-- 통계 -->
+      <section id="tab-stats" class="tab-content">
+        <div class="section-label" style="margin-bottom:12px">수익률 통계</div>
+        <div id="stats-content"></div>
+      </section>
+
+      <!-- 매매 메모 -->
+      <section id="tab-diary" class="tab-content">
+        <div class="section-label">매매 일기</div>
+        <div id="diary-list"></div>
+        <button class="fab" onclick="openDiaryModal()">+ 메모 추가</button>
+      </section>
+
+    </div><!-- /swipe-container -->
   </div>
 
   <!-- 모달 오버레이 -->
@@ -76,9 +101,26 @@
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Auth 먼저 로드 -->
   <script src="auth.js"></script>
-  <!-- 앱 로직 -->
   <script src="app.js"></script>
+
+  <!-- ⑤ 스와이프 탭 전환 -->
+  <script>
+    const TAB_ORDER = ['entry','portfolio','watchlist','review','stats','diary'];
+    let touchStartX = 0;
+    const container = document.getElementById('swipe-container');
+    container.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    container.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) < 50) return;
+      const activeTab = document.querySelector('.tab.active')?.dataset?.tab;
+      const idx = TAB_ORDER.indexOf(activeTab);
+      const nextIdx = dx < 0 ? Math.min(idx + 1, TAB_ORDER.length - 1) : Math.max(idx - 1, 0);
+      if (nextIdx !== idx) {
+        const nextTab = document.querySelector(`.tab[data-tab="${TAB_ORDER[nextIdx]}"]`);
+        if (nextTab) nextTab.click();
+      }
+    }, { passive: true });
+  </script>
 </body>
 </html>
