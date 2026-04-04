@@ -337,11 +337,11 @@ textarea.form-input { resize: none; min-height: 72px; line-height: 1.6; }
 @keyframes tickerScroll {
   0%   { transform: translateY(0); }
   30%  { transform: translateY(0); }
-  45%  { transform: translateY(-27px); }
-  60%  { transform: translateY(-27px); }
-  75%  { transform: translateY(-54px); }
-  95%  { transform: translateY(-54px); }
-  100% { transform: translateY(-81px); }
+  45%  { transform: translateY(-22px); }
+  60%  { transform: translateY(-22px); }
+  75%  { transform: translateY(-44px); }
+  95%  { transform: translateY(-44px); }
+  100% { transform: translateY(-66px); }
 }
 
 @media (max-width: 400px) {
