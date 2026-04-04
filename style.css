@@ -335,13 +335,25 @@ textarea.form-input { resize: none; min-height: 72px; line-height: 1.6; }
 .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
 @keyframes tickerScroll {
-  0%   { transform: translateY(0); }
-  30%  { transform: translateY(0); }
-  45%  { transform: translateY(-22px); }
-  60%  { transform: translateY(-22px); }
-  75%  { transform: translateY(-44px); }
-  95%  { transform: translateY(-44px); }
-  100% { transform: translateY(-66px); }
+  0%    { transform: translateY(0); }
+  8%    { transform: translateY(0); }
+  11%   { transform: translateY(-22px); }
+  19%   { transform: translateY(-22px); }
+  22%   { transform: translateY(-44px); }
+  30%   { transform: translateY(-44px); }
+  33%   { transform: translateY(-66px); }
+  41%   { transform: translateY(-66px); }
+  44%   { transform: translateY(-88px); }
+  52%   { transform: translateY(-88px); }
+  55%   { transform: translateY(-110px); }
+  63%   { transform: translateY(-110px); }
+  66%   { transform: translateY(-132px); }
+  74%   { transform: translateY(-132px); }
+  77%   { transform: translateY(-154px); }
+  85%   { transform: translateY(-154px); }
+  88%   { transform: translateY(-176px); }
+  96%   { transform: translateY(-176px); }
+  100%  { transform: translateY(-198px); }
 }
 
 @media (max-width: 400px) {
