@@ -112,8 +112,29 @@ async function refreshAllPrices() {
 // ── 유틸 ──────────────────────────────────────────────────────
 function fmtNum(n) { if (n === null || n === undefined || n === '') return '—'; return Math.round(n).toLocaleString('ko-KR'); }
 function fmtPct(n) { return (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%'; }
-function calcPnlPct(entry, current) { return ((current - entry) / entry) * 100; }
-function calcPnlAmt(entry, current, qty) { return (current - entry) * qty; }
+// ── 수수료 / 세금 설정 ────────────────────────────────────────
+function getFeeRate() {
+  return parseFloat(localStorage.getItem('feeRate') || '0') / 100;
+}
+function isTaxMode() {
+  return localStorage.getItem('taxMode') === 'on';
+}
+// 코스피 0.18%, 코스닥 0.18% (2024 기준)
+const TAX_RATE = 0.0018;
+
+function getAdjustedEntry(entry) {
+  return entry * (1 + getFeeRate());
+}
+function calcPnlPct(entry, current) {
+  const adj = getAdjustedEntry(entry);
+  const sellAmt = isTaxMode() ? current * (1 - TAX_RATE) : current;
+  return ((sellAmt - adj) / adj) * 100;
+}
+function calcPnlAmt(entry, current, qty) {
+  const adj = getAdjustedEntry(entry);
+  const sellAmt = isTaxMode() ? current * (1 - TAX_RATE) : current;
+  return (sellAmt - adj) * qty;
+}
 function pnlClass(n) { return n >= 0 ? 'pos' : 'neg'; }
 function todayStr() { const d = new Date(); return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0'); }
 
@@ -1428,4 +1449,83 @@ async function renderPortfolioGraph() {
       <span style="color:${color};font-weight:600">현재 ${fmtNum(vals[vals.length-1])}원</span>
     </div>
   `;
+}
+
+
+
+// ════════════════════════════════════════════════════════════════
+// 수수료 설정 모달
+// ════════════════════════════════════════════════════════════════
+function openSettingsModal() {
+  const feeVal = localStorage.getItem('feeRate') || '0';
+  const taxOn = localStorage.getItem('taxMode') === 'on';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-title">⚙️ 설정</div>
+
+    <div class="form-label">매수 수수료율 (%)</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px;margin-top:-4px">키움/대신 0.015% · MTS 보통 0.015~0.1%</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input class="form-input" type="number" id="fee-input" value="${feeVal}"
+        placeholder="0.015" step="0.001" min="0" max="1"
+        inputmode="decimal" style="margin-bottom:0;flex:1">
+      <span style="color:var(--text2);font-size:14px;flex-shrink:0">%</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <button onclick="setFeePreset('0.015')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">키움 0.015%</button>
+      <button onclick="setFeePreset('0.1')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">MTS 0.1%</button>
+      <button onclick="setFeePreset('0')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">없음 0%</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-label" style="margin-top:4px">증권거래세 반영</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;margin-top:-4px">
+      코스피/코스닥 매도세 0.18% — 켜면 HTS 실현손익 기준에 가까워져요
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+      <div>
+        <div style="font-size:13px;color:var(--text);font-weight:600">세금 포함 손익 표시</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">매도 시 거래세 0.18% 차감</div>
+      </div>
+      <div id="tax-toggle" onclick="toggleTaxDisplay()"
+        style="width:44px;height:24px;border-radius:12px;background:${taxOn?'var(--green)':'var(--bg2)'};border:1px solid ${taxOn?'var(--green)':'var(--border)'};cursor:pointer;position:relative;transition:all .2s;flex-shrink:0">
+        <div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${taxOn?'22px':'3px'};transition:left .2s"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px;margin-top:8px;line-height:1.7">
+      현재: 수수료 <span style="color:var(--purple);font-weight:600">${feeVal}%</span> · 세금 <span style="color:${taxOn?'var(--green)':'var(--text3)'};font-weight:600">${taxOn?'포함':'미포함'}</span>
+    </div>
+    <button class="submit-btn submit-buy" onclick="saveSettings()">저장</button>
+  `;
+  openModal();
+}
+
+function toggleTaxDisplay() {
+  const tog = document.getElementById('tax-toggle');
+  const isOn = tog.style.background.includes('green') || tog.style.background === 'var(--green)';
+  const newOn = !isOn;
+  tog.style.background = newOn ? 'var(--green)' : 'var(--bg2)';
+  tog.style.borderColor = newOn ? 'var(--green)' : 'var(--border)';
+  tog.querySelector('div').style.left = newOn ? '22px' : '3px';
+}
+
+function setFeePreset(val) {
+  document.getElementById('fee-input').value = val;
+  // 미리보기 업데이트
+  const preview = document.querySelector('[style*="실질 평단"]');
+  if (preview) {
+    preview.innerHTML = '현재 수수료율: <span style="color:var(--purple);font-weight:600">' + val + '%</span><br>예시: 평단 23,928원 → 실질 평단 <span style="color:var(--text)">' + (23928 * (1 + parseFloat(val)/100)).toFixed(0) + '원</span>';
+  }
+}
+
+function saveSettings() {
+  const feeVal = parseFloat(document.getElementById('fee-input').value) || 0;
+  localStorage.setItem('feeRate', feeVal.toString());
+  const tog = document.getElementById('tax-toggle');
+  const isOn = tog.style.background.includes('green') || tog.style.background === 'var(--green)';
+  localStorage.setItem('taxMode', isOn ? 'on' : 'off');
+  closeModal();
+  renderPortfolio();
 }
