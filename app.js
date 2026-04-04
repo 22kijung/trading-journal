@@ -118,15 +118,21 @@ function pnlClass(n) { return n >= 0 ? 'pos' : 'neg'; }
 function todayStr() { const d = new Date(); return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0'); }
 
 // ── 탭 전환 ───────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 'entry') renderEntryForm();
-    if (btn.dataset.tab === 'review') renderReview();
-    if (btn.dataset.tab === 'watchlist') renderWatchlist();
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      // 탭 버튼이 보이도록 스크롤
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      if (btn.dataset.tab === 'entry') renderEntryForm();
+      if (btn.dataset.tab === 'review') renderReview();
+      if (btn.dataset.tab === 'watchlist') renderWatchlist();
+      if (btn.dataset.tab === 'stats') renderStats();
+      if (btn.dataset.tab === 'diary') renderDiary();
+    });
   });
 });
 
@@ -310,6 +316,19 @@ async function renderPortfolio() {
           <div class="pos-meta-item">확신도 <span>${p.conviction}/5</span></div>
         </div>
         <div class="thesis-box">${p.thesis || ''}</div>
+        ${p.target && p.stop ? (() => {
+          const range = p.target - p.stop;
+          const prog = range > 0 ? Math.max(0, Math.min(100, ((p.current_price - p.stop) / range * 100))) : 0;
+          const color = prog >= 80 ? 'var(--green)' : prog >= 40 ? 'var(--purple)' : 'var(--red)';
+          return `<div style="margin-top:8px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px">
+              <span>손절 ${fmtNum(p.stop)}</span><span>목표 ${fmtNum(p.target)}</span>
+            </div>
+            <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${prog.toFixed(1)}%;background:${color};border-radius:2px;transition:width 0.3s"></div>
+            </div>
+          </div>`;
+        })() : ''}
         <div class="${triggerClass}">${triggerText}</div>
       </div>`;
   }).join('');
@@ -842,3 +861,197 @@ async function autoRefreshPrices() {
 
 setInterval(autoRefreshIndices, 3 * 60 * 1000);   // 3분
 setInterval(autoRefreshPrices,  5 * 60 * 1000);   // 5분
+
+// ④ 관심종목 현재가 자동 갱신 (장중 5분마다)
+async function autoRefreshWatchlist() {
+  if (!isMarketHours()) return;
+  const list = await sb.get('watchlist');
+  if (list.length === 0) return;
+  let updated = false;
+  for (const w of list) {
+    const code = w.code || SYMBOL_MAP[w.name];
+    if (!code) continue;
+    try {
+      const res = await fetch('/api/price?symbol=' + code);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.price) { await sb.update('watchlist', w.id, { current_price: data.price }); updated = true; }
+    } catch { continue; }
+  }
+  if (updated) renderWatchlist();
+}
+setInterval(autoRefreshWatchlist, 5 * 60 * 1000);   // 5분
+
+// ════════════════════════════════════════════════════════════════
+// ① 수익률 통계
+// ════════════════════════════════════════════════════════════════
+async function renderStats() {
+  const reviews = await sb.get('reviews');
+  const el = document.getElementById('stats-content'); if (!el) return;
+  if (reviews.length === 0) {
+    el.innerHTML = '<div class="empty">복기 데이터가 없어요<br>매도 완료 후 자동으로 쌓입니다</div>'; return;
+  }
+  const wins = reviews.filter(r => r.pnl_pct >= 0);
+  const losses = reviews.filter(r => r.pnl_pct < 0);
+  const winRate = (wins.length / reviews.length * 100).toFixed(1);
+  const avgWin = wins.length ? (wins.reduce((s,r) => s + r.pnl_pct, 0) / wins.length).toFixed(2) : 0;
+  const avgLoss = losses.length ? (losses.reduce((s,r) => s + r.pnl_pct, 0) / losses.length).toFixed(2) : 0;
+  const totalPnl = reviews.reduce((s,r) => s + (r.pnl_amt || 0), 0);
+  const cores = reviews.filter(r => r.type === 'core');
+  const trades = reviews.filter(r => r.type !== 'core');
+  const coreWinRate = cores.length ? (cores.filter(r => r.pnl_pct >= 0).length / cores.length * 100).toFixed(1) : '—';
+  const tradeWinRate = trades.length ? (trades.filter(r => r.pnl_pct >= 0).length / trades.length * 100).toFixed(1) : '—';
+
+  // 월별 손익
+  const byMonth = {};
+  reviews.forEach(r => {
+    const m = (r.exit_date || '').slice(0, 7).replace('.', '-').slice(0, 7);
+    if (!m) return;
+    byMonth[m] = (byMonth[m] || 0) + (r.pnl_amt || 0);
+  });
+  const months = Object.keys(byMonth).sort();
+  const maxAbs = Math.max(...Object.values(byMonth).map(Math.abs), 1);
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">총 거래</div>
+        <div class="stat-val">${reviews.length}건</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">승률</div>
+        <div class="stat-val ${parseFloat(winRate) >= 50 ? 'pos' : 'neg'}">${winRate}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">평균 수익</div>
+        <div class="stat-val pos">+${avgWin}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">평균 손실</div>
+        <div class="stat-val neg">${avgLoss}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">누적 손익</div>
+        <div class="stat-val ${totalPnl >= 0 ? 'pos' : 'neg'}">${fmtNum(totalPnl)}원</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">코어 승률</div>
+        <div class="stat-val">${coreWinRate}${coreWinRate !== '—' ? '%' : ''}</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:16px;margin-bottom:10px">월별 손익</div>
+    <div class="month-chart">
+      ${months.map(m => {
+        const v = byMonth[m];
+        const pct = Math.abs(v) / maxAbs * 100;
+        const color = v >= 0 ? 'var(--green)' : 'var(--red)';
+        return `<div class="month-bar-wrap">
+          <div class="month-bar-label">${m.slice(5)}</div>
+          <div class="month-bar-track">
+            <div class="month-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="month-bar-val" style="color:${color}">${v >= 0 ? '+' : ''}${fmtNum(v)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ③ 매매 메모/일기
+// ════════════════════════════════════════════════════════════════
+async function renderDiary() {
+  const entries = await sb.get('diary');
+  const el = document.getElementById('diary-list'); if (!el) return;
+  el.innerHTML = entries.length === 0
+    ? '<div class="empty">아직 메모가 없어요<br>+ 버튼으로 추가하세요</div>'
+    : entries.slice().reverse().map(d => `
+        <div class="diary-card" onclick="openDiaryDetail(${d.id})">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-size:12px;font-weight:600;color:var(--purple)">${d.date}</div>
+            <div style="font-size:11px;color:var(--text3)">${d.mood || ''}</div>
+          </div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6">${(d.content || '').slice(0, 100)}${(d.content||'').length > 100 ? '...' : ''}</div>
+        </div>`).join('');
+}
+
+function openDiaryModal() {
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-title">매매 메모</div>
+    <div class="form-label">날짜</div>
+    <input class="form-input" id="d-date" value="${todayStr()}">
+    <div class="form-label">오늘 시장 느낌</div>
+    <div class="toggle-group">
+      <button class="toggle-btn" id="d-mood-bull" onclick="setDiaryMood('강세 📈')">강세 📈</button>
+      <button class="toggle-btn" id="d-mood-bear" onclick="setDiaryMood('약세 📉')">약세 📉</button>
+      <button class="toggle-btn" id="d-mood-side" onclick="setDiaryMood('횡보 😐')">횡보 😐</button>
+    </div>
+    <div class="form-label">메모</div>
+    <textarea class="form-input" id="d-content" placeholder="오늘 시장 흐름, 실수, 배운 것..." style="min-height:120px"></textarea>
+    <button class="submit-btn submit-buy" onclick="saveDiary()">저장</button>
+  `;
+  openModal();
+}
+
+let _diaryMood = '';
+function setDiaryMood(mood) {
+  _diaryMood = mood;
+  ['bull','bear','side'].forEach(k => document.getElementById('d-mood-' + k).className = 'toggle-btn');
+  const map = {'강세 📈':'bull','약세 📉':'bear','횡보 😐':'side'};
+  if (map[mood]) document.getElementById('d-mood-' + map[mood]).className = 'toggle-btn active-buy';
+}
+
+async function saveDiary() {
+  const content = document.getElementById('d-content').value.trim();
+  if (!content) return;
+  await sb.insert('diary', { date: document.getElementById('d-date').value, mood: _diaryMood, content });
+  closeModal(); renderDiary();
+}
+
+async function openDiaryDetail(id) {
+  const rows = await sb.get('diary', `&id=eq.${id}`);
+  const d = rows[0]; if (!d) return;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-title">${d.date} ${d.mood || ''}</div>
+    <div class="form-label">메모</div>
+    <textarea class="form-input" id="d-edit-content" style="min-height:140px">${d.content || ''}</textarea>
+    <div style="display:flex;gap:8px">
+      <button class="submit-btn submit-buy" style="flex:2" onclick="updateDiary(${id})">수정 저장</button>
+      <button class="submit-btn" style="flex:1;background:transparent;color:var(--text3);border:1px solid var(--border)" onclick="deleteDiary(${id})">삭제</button>
+    </div>
+  `;
+  openModal();
+}
+
+async function updateDiary(id) {
+  await sb.update('diary', id, { content: document.getElementById('d-edit-content').value });
+  closeModal(); renderDiary();
+}
+
+async function deleteDiary(id) {
+  if (!confirm('메모를 삭제할까요?')) return;
+  await sb.delete('diary', id);
+  closeModal(); renderDiary();
+}
+
+// ════════════════════════════════════════════════════════════════
+// ⑥ CSV 내보내기
+// ════════════════════════════════════════════════════════════════
+async function exportCSV() {
+  const reviews = await sb.get('reviews');
+  if (reviews.length === 0) { alert('내보낼 거래 기록이 없어요'); return; }
+  const headers = ['종목','타입','진입가','청산가','수량','수익률(%)','손익(원)','진입일','청산일','배운점'];
+  const rows = reviews.map(r => [
+    r.name, r.type === 'core' ? '코어' : '트레이딩',
+    r.entry, r.exit, r.qty,
+    Number(r.pnl_pct).toFixed(2), Math.round(r.pnl_amt),
+    r.entry_date, r.exit_date,
+    (r.learned || '').replace(/,/g, '，')
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `매매일지_${todayStr()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
