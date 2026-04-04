@@ -729,10 +729,47 @@ function renderEntryForm(prefillName = '', prefillThesis = '', prefillCode = '')
   document.getElementById('entry-form').innerHTML = `
     <div class="form-section">
       <div class="form-label">종목명</div>
-      <input class="form-input" id="e-name" placeholder="종목명" value="${prefillName}">
-      <div class="form-label">종목 코드 <span style="font-weight:400;color:var(--text3)">(6자리 · 네이버 금융에서 확인)</span></div>
-      <input class="form-input" id="e-code" placeholder="ex) 003490" maxlength="6" value="${prefillCode}" oninput="this.value=this.value.replace(/\\D/g,'')">
-      <div style="font-size:11px;color:var(--text3);margin-top:-4px;margin-bottom:8px">네이버 금융 검색 → 종목 클릭 → URL의 code= 뒤 숫자</div>
+<div style="position:relative" data-stock-search-wrap>
+  <input
+    class="form-input"
+    id="e-name"
+    placeholder="종목명 또는 코드"
+    value="${prefillName}"
+    autocomplete="off"
+    oninput="handleStockInput(this.value)"
+  >
+  <div
+    id="stock-search-results"
+    style="
+      display:none;
+      position:absolute;
+      top:calc(100% - 8px);
+      left:0;
+      right:0;
+      z-index:30;
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:0 8px 24px rgba(0,0,0,0.18);
+    "
+  ></div>
+</div>
+
+<div class="form-label">종목 코드 <span style="font-weight:400;color:var(--text3)">(자동 입력)</span></div>
+<input
+  class="form-input"
+  id="e-code"
+  placeholder="자동 입력"
+  maxlength="6"
+  value="${prefillCode}"
+  oninput="this.value=this.value.replace(/\\D/g,'')"
+>
+<div style="font-size:11px;color:var(--text3);margin-top:-4px;margin-bottom:8px">
+  종목명을 입력하면 후보가 뜨고, 선택하면 코드가 자동으로 채워집니다
+</div>
+      
+      
       <div class="form-label">방향</div>
       <div class="toggle-group">
         <button class="toggle-btn active-buy" id="e-buy" onclick="setEntryDir('buy')">매수</button>
