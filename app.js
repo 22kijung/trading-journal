@@ -299,7 +299,7 @@ async function renderPortfolio() {
       setTimeout(() => { el.style.transition='none'; el.style.transform='translateY(0)'; }, 500);
     } else {
       el.style.transition = 'transform .5s ease';
-      el.style.transform = \`translateY(-\${_idxGrp * 66}px)\`;
+      el.style.transform = 'translateY(-' + (_idxGrp * 66) + 'px)';
     }
   }, 3000);
 
