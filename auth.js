@@ -45,6 +45,7 @@ function showLogin() {
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.querySelector('.app').style.display = 'block';
+  if (typeof initApp === 'function') initApp();
 }
 
 async function getAuthHeaders() {
