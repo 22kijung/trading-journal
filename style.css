@@ -334,6 +334,16 @@ textarea.form-input { resize: none; min-height: 72px; line-height: 1.6; }
 /* 구분선 */
 .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
+@keyframes tickerScroll {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(0); }
+  45%  { transform: translateY(-27px); }
+  60%  { transform: translateY(-27px); }
+  75%  { transform: translateY(-54px); }
+  95%  { transform: translateY(-54px); }
+  100% { transform: translateY(-81px); }
+}
+
 @media (max-width: 400px) {
   .price-grid { grid-template-columns: 1fr 1fr; }
   .summary-grid { grid-template-columns: 1fr 1fr; }
