@@ -41,6 +41,24 @@ const SYMBOL_MAP = {
   '현대차': '005380', '우진엔텍': '018620',
 };
 
+async function fetchIndices() {
+  const indices = [
+    { key: 'kospi',  symbol: '^KS11', label: 'KOSPI' },
+    { key: 'kosdaq', symbol: '^KQ11', label: 'KOSDAQ' },
+    { key: 'sp500',  symbol: '^GSPC', label: 'S&P 500' },
+  ];
+  const results = {};
+  await Promise.all(indices.map(async (idx) => {
+    try {
+      const res = await fetch(`/api/price?symbol=${encodeURIComponent(idx.symbol)}&type=index`);
+      if (!res.ok) return;
+      const data = await res.json();
+      results[idx.key] = { price: data.price, change: data.change, label: idx.label };
+    } catch { }
+  }));
+  return results;
+}
+
 async function fetchPrice(name) {
   const symbol = SYMBOL_MAP[name];
   if (!symbol) return null;
@@ -109,7 +127,10 @@ document.querySelectorAll('.tab').forEach(btn => {
 
 // ── 보유 포지션 ───────────────────────────────────────────────
 async function renderPortfolio() {
-  const positions = await sb.get('positions', '&status=eq.open');
+  const [positions, indices] = await Promise.all([
+    sb.get('positions', '&status=eq.open'),
+    fetchIndices(),
+  ]);
   let totalInvest = 0, totalPnl = 0, posCount = 0, negCount = 0;
   positions.forEach(p => {
     const pnl = calcPnlAmt(p.entry, p.current_price, p.qty);
@@ -124,31 +145,59 @@ async function renderPortfolio() {
   document.getElementById('summary-grid').innerHTML = `
     <div class="metric">
       <div class="metric-label">총 평가손익</div>
-      <div class="metric-val ${pnlClass(totalPnl)}">${fmtNum(totalPnl)}원</div>
-      <div style="font-size:13px;font-weight:600;color:${pctColor};margin-top:3px">${fmtPct(totalPct)}</div>
+      <div class="metric-val ${pnlClass(totalPnl)}" style="font-size:20px;font-weight:700;margin-top:6px">${fmtNum(totalPnl)}원</div>
     </div>
-    <div class="metric" style="position:relative">
-      <div class="metric-label">종목 현황</div>
-      <div class="stock-status">
-        <div class="stock-status-item">
-          <div class="stock-status-num" style="color:var(--green)">▲ ${posCount}</div>
-          <div class="stock-status-label">수익 종목</div>
-        </div>
-        <div class="stock-status-divider"></div>
-        <div class="stock-status-item">
-          <div class="stock-status-num" style="color:var(--red)">▼ ${negCount}</div>
-          <div class="stock-status-label">손실 종목</div>
-        </div>
-      </div>
-      <button id="refresh-btn" onclick="refreshAllPrices()" style="position:absolute;top:10px;right:10px;background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer">현재가 갱신</button>
+    <div class="metric">
+      <div class="metric-label">총 수익률</div>
+      <div style="font-size:20px;font-weight:700;color:${pctColor};margin-top:6px">${fmtPct(totalPct)}</div>
     </div>
     <div class="metric">
       <div class="metric-label">총 투자금</div>
-      <div class="metric-val neutral" style="font-size:16px">${fmtNum(totalInvest)}원</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:6px">${fmtNum(totalInvest)}원</div>
     </div>
     <div class="metric">
       <div class="metric-label">평가금액</div>
-      <div class="metric-val neutral" style="font-size:16px">${fmtNum(totalMarketVal)}원</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:6px">${fmtNum(totalMarketVal)}원</div>
+    </div>
+    <div class="metric">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="metric-label" style="margin-bottom:0">종목 현황</div>
+        <button id="refresh-btn" onclick="refreshAllPrices()" style="background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer">현재가 갱신</button>
+      </div>
+      <div style="display:flex;height:54px">
+        <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(76,175,125,0.08)">
+          <div style="font-size:16px;font-weight:700;color:var(--green)">▲</div>
+          <div>
+            <div style="font-size:20px;font-weight:700;color:var(--green)">${posCount}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">수익</div>
+          </div>
+        </div>
+        <div style="width:1px;background:var(--border);margin:4px 6px"></div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(240,96,96,0.08)">
+          <div style="font-size:16px;font-weight:700;color:var(--red)">▼</div>
+          <div>
+            <div style="font-size:20px;font-weight:700;color:var(--red)">${negCount}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">손실</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="metric" id="index-section">
+      <div class="metric-label" style="margin-bottom:8px">주요 지수</div>
+      <div style="height:54px;display:flex;flex-direction:column;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">KOSPI</span>
+          <span id="idx-kospi">${idxHtml('kospi')}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">KOSDAQ</span>
+          <span id="idx-kosdaq">${idxHtml('kosdaq')}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">S&P 500</span>
+          <span id="idx-sp500">${idxHtml('sp500')}</span>
+        </div>
+      </div>
     </div>
   `;
 
@@ -658,3 +707,56 @@ function openEntryModal() {
 document.getElementById('today-date').textContent = todayStr();
 renderPortfolio();
 renderEntryForm();
+
+// ── 자동 갱신 ──────────────────────────────────────────────────
+function isMarketHours() {
+  const now = new Date();
+  const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const day = kst.getDay(); // 0=일, 6=토
+  const h = kst.getHours();
+  const m = kst.getMinutes();
+  const minutes = h * 60 + m;
+  if (day === 0 || day === 6) return false;
+  return minutes >= 9 * 60 && minutes <= 15 * 60 + 30;
+}
+
+// 지수 3분마다 자동 갱신 (장중만)
+async function autoRefreshIndices() {
+  if (!isMarketHours()) return;
+  const indices = await fetchIndices();
+  const el = document.getElementById('index-section');
+  if (!el) return;
+  ['kospi','kosdaq','sp500'].forEach(key => {
+    const cell = document.getElementById('idx-' + key);
+    if (!cell) return;
+    const d = indices[key];
+    if (!d || !d.price) return;
+    const c = d.change >= 0 ? 'var(--green)' : 'var(--red)';
+    const sign = d.change >= 0 ? '+' : '';
+    const chg = d.change !== null ? sign + d.change.toFixed(2) + '%' : '';
+    cell.innerHTML = '<span style="font-size:13px;font-weight:600;color:' + c + '">' + d.price.toLocaleString() + ' <span style="font-size:11px">' + chg + '</span></span>';
+  });
+}
+
+// 종목 현재가 5분마다 자동 갱신 (장중만)
+async function autoRefreshPrices() {
+  if (!isMarketHours()) return;
+  const positions = await sb.get('positions', '&status=eq.open');
+  if (positions.length === 0) return;
+  positions.forEach(p => { if (p.code) SYMBOL_MAP[p.name] = p.code; });
+  let updated = false;
+  for (const p of positions) {
+    const code = p.code || SYMBOL_MAP[p.name];
+    if (!code) continue;
+    try {
+      const res = await fetch('/api/price?symbol=' + code);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.price) { await sb.update('positions', p.id, { current_price: data.price }); updated = true; }
+    } catch { continue; }
+  }
+  if (updated) renderPortfolio();
+}
+
+setInterval(autoRefreshIndices, 3 * 60 * 1000);   // 3분
+setInterval(autoRefreshPrices,  5 * 60 * 1000);   // 5분
