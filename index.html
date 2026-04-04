@@ -107,12 +107,21 @@
   <!-- ⑤ 스와이프 탭 전환 -->
   <script>
     const TAB_ORDER = ['entry','portfolio','watchlist','review','stats','diary'];
-    let touchStartX = 0;
-    const container = document.getElementById('swipe-container');
-    container.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-    container.addEventListener('touchend', e => {
+    let touchStartX = 0, touchStartY = 0;
+
+    // 전체 화면에서 스와이프 감지 (헤더/탭바 제외한 콘텐츠 영역)
+    document.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
       const dx = e.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(dx) < 50) return;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      // 수평 스와이프만 처리 (세로 스크롤과 구분)
+      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+      // 모달 열려있으면 스와이프 무시
+      if (document.getElementById('modal-overlay').classList.contains('open')) return;
       const activeTab = document.querySelector('.tab.active')?.dataset?.tab;
       const idx = TAB_ORDER.indexOf(activeTab);
       const nextIdx = dx < 0 ? Math.min(idx + 1, TAB_ORDER.length - 1) : Math.max(idx - 1, 0);
