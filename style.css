@@ -395,3 +395,70 @@ textarea.form-input { resize: none; min-height: 72px; line-height: 1.6; }
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex-shrink: 0; }
+
+
+/* ── 라이트모드 ─────────────────────────────────────────────── */
+body.light {
+  --bg: #f4f4f8;
+  --bg2: #ffffff;
+  --bg3: #ebebf0;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1a1a2e;
+  --text2: #5a5a72;
+  --text3: #9090a8;
+}
+
+/* ── 다크/라이트 토글 버튼 ──────────────────────────────────── */
+.theme-toggle {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text2);
+  transition: all 0.15s;
+}
+
+/* ── 탭 크기 개선 ───────────────────────────────────────────── */
+.tab {
+  flex-shrink: 0;
+  padding: 11px 14px;
+  font-size: 13px;
+}
+
+/* ── 스켈레톤 로딩 ──────────────────────────────────────────── */
+.skeleton-wrap { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+.skeleton {
+  height: 16px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── 포지션 정렬 버튼 ───────────────────────────────────────── */
+.sort-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.sort-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.sort-btn.active { background: var(--purple-bg); color: var(--purple); border-color: var(--purple); }
