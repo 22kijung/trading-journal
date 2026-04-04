@@ -138,10 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── 보유 포지션 ───────────────────────────────────────────────
 async function renderPortfolio() {
-  const [positions, indices] = await Promise.all([
+  const [positions, indices, snapshots] = await Promise.all([
     sb.get('positions', '&status=eq.open'),
     fetchIndices(),
+    sb.get('snapshots', '&order=date.desc&limit=30'),
   ]);
+
+  // 오늘 스냅샷 저장 (장 마감 후 1회)
+  await saveSnapshotIfNeeded(positions);
+
+  // 전날 대비 계산
+  const today = todayStr();
+  const yesterday = snapshots.find(s => s.date < today);
   let totalInvest = 0, totalPnl = 0, posCount = 0, negCount = 0;
   positions.forEach(p => {
     const pnl = calcPnlAmt(p.entry, p.current_price, p.qty);
@@ -151,6 +159,11 @@ async function renderPortfolio() {
   });
   const totalPct = totalInvest > 0 ? (totalPnl / totalInvest) * 100 : 0;
   const totalMarketVal = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
+
+  // 전날 대비
+  const prevVal = yesterday?.total_value || null;
+  const dayChange = prevVal ? totalMarketVal - prevVal : null;
+  const dayChangePct = prevVal ? (dayChange / prevVal * 100) : null;
 
   const pctColor = totalPct >= 0 ? 'var(--green)' : 'var(--red)';
 
@@ -177,9 +190,17 @@ async function renderPortfolio() {
       <div class="metric-label">총 투자금</div>
       <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:6px">${fmtNum(totalInvest)}원</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">평가금액</div>
-      <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:6px">${fmtNum(totalMarketVal)}원</div>
+    <div class="metric" style="grid-column: span 2">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="metric-label">총 평가금액</div>
+          <div style="font-size:22px;font-weight:700;color:var(--text);margin-top:4px">${fmtNum(totalMarketVal)}원</div>
+          ${dayChange !== null ? `<div style="font-size:12px;margin-top:4px;color:${dayChange>=0?'var(--green)':'var(--red)'}">
+            전날 대비 ${dayChange>=0?'+':''}${fmtNum(dayChange)}원 (${dayChangePct>=0?'+':''}${dayChangePct.toFixed(2)}%)
+          </div>` : '<div style="font-size:11px;color:var(--text3);margin-top:4px">전날 데이터 수집 중...</div>'}
+        </div>
+        <canvas id="portfolio-chart" width="120" height="48" style="margin-top:4px"></canvas>
+      </div>
     </div>
     <div class="metric">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -284,6 +305,9 @@ async function renderPortfolio() {
     </div>
     </div>
   `;
+
+  // 미니 라인차트 그리기
+  drawPortfolioChart(snapshots, totalMarketVal);
 
   const listEl = document.getElementById('portfolio-list');
   if (positions.length === 0) {
@@ -933,6 +957,8 @@ setInterval(autoRefreshWatchlist, 5 * 60 * 1000);   // 5분
 async function renderStats() {
   const reviews = await sb.get('reviews');
   const el = document.getElementById('stats-content'); if (!el) return;
+  // 그래프 먼저 렌더
+  renderPortfolioGraph();
   if (reviews.length === 0) {
     el.innerHTML = '<div class="empty">복기 데이터가 없어요<br>매도 완료 후 자동으로 쌓입니다</div>'; return;
   }
@@ -1179,4 +1205,167 @@ async function checkPriceAlerts(positions) {
       sendNotification(`⚠️ ${p.name} 손절가 근접`, `현재가 ${fmtNum(p.current_price)}원 — 손절가 ${fmtNum(p.stop)}원`);
     }
   }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// 스냅샷 저장 + 차트
+// ════════════════════════════════════════════════════════════════
+
+// 하루 1번 장 마감 후 스냅샷 저장
+async function saveSnapshotIfNeeded(positions) {
+  if (!currentUser) return;
+  const today = todayStr();
+  // 오늘 스냅샷 이미 있으면 스킵
+  const existing = await sb.get('snapshots', `&date=eq.${today}&user_id=eq.${currentUser.id}`);
+  if (existing.length > 0) return;
+  // 장 마감 후에만 저장 (15:30 이후 or 주말)
+  const now = new Date();
+  const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const day = kst.getDay();
+  const minutes = kst.getHours() * 60 + kst.getMinutes();
+  const isWeekend = day === 0 || day === 6;
+  const isAfterClose = minutes >= 15 * 60 + 30;
+  if (!isWeekend && !isAfterClose) return;
+
+  const totalInvest = positions.reduce((s, p) => s + p.entry * p.qty, 0);
+  const totalValue = positions.reduce((s, p) => s + p.current_price * p.qty, 0);
+  const totalPnl = totalValue - totalInvest;
+  await sb.insert('snapshots', { date: today, total_value: totalValue, total_invest: totalInvest, total_pnl: totalPnl });
+}
+
+// 미니 라인차트 (평가금액 카드 내부)
+function drawPortfolioChart(snapshots, currentVal) {
+  const canvas = document.getElementById('portfolio-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = 120 * dpr; canvas.height = 48 * dpr;
+  canvas.style.width = '120px'; canvas.style.height = '48px';
+  ctx.scale(dpr, dpr);
+
+  // 최근 14일 데이터 + 오늘 현재값
+  const points = [...snapshots].reverse().slice(-13);
+  const allVals = [...points.map(s => s.total_value), currentVal];
+  if (allVals.length < 2) {
+    ctx.fillStyle = 'rgba(144,144,168,0.3)';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('데이터 수집 중', 4, 24);
+    return;
+  }
+
+  const min = Math.min(...allVals) * 0.998;
+  const max = Math.max(...allVals) * 1.002;
+  const range = max - min || 1;
+  const W = 120, H = 48, pad = 4;
+
+  const toX = i => pad + (i / (allVals.length - 1)) * (W - pad * 2);
+  const toY = v => H - pad - ((v - min) / range) * (H - pad * 2);
+
+  const isUp = currentVal >= (points[0]?.total_value || currentVal);
+  const color = isUp ? '#4caf7d' : '#f06060';
+
+  // 그라데이션 fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, isUp ? 'rgba(76,175,125,0.25)' : 'rgba(240,96,96,0.25)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.beginPath();
+  allVals.forEach((v, i) => {
+    i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.lineTo(toX(allVals.length - 1), H);
+  ctx.lineTo(toX(0), H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // 라인
+  ctx.beginPath();
+  allVals.forEach((v, i) => {
+    i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // 마지막 점
+  ctx.beginPath();
+  ctx.arc(toX(allVals.length - 1), toY(currentVal), 3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+// 전체 그래프 렌더 (통계 탭)
+async function renderPortfolioGraph() {
+  const snapshots = await sb.get('snapshots', '&order=date.asc');
+  const el = document.getElementById('portfolio-graph');
+  if (!el) return;
+
+  if (snapshots.length < 2) {
+    el.innerHTML = '<div class="empty">데이터가 부족해요<br>매일 접속하면 그래프가 쌓여요</div>';
+    return;
+  }
+
+  const W = el.offsetWidth || 320;
+  const H = 200;
+  const pad = { top: 16, right: 16, bottom: 32, left: 56 };
+  const vals = snapshots.map(s => s.total_value);
+  const min = Math.min(...vals) * 0.995;
+  const max = Math.max(...vals) * 1.005;
+  const range = max - min || 1;
+
+  const toX = i => pad.left + (i / (vals.length - 1)) * (W - pad.left - pad.right);
+  const toY = v => pad.top + (1 - (v - min) / range) * (H - pad.top - pad.bottom);
+
+  const isUp = vals[vals.length - 1] >= vals[0];
+  const color = isUp ? '#4caf7d' : '#f06060';
+
+  // SVG로 그리기
+  const pathD = vals.map((v, i) => `${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+  const fillD = pathD + ` L${toX(vals.length-1).toFixed(1)},${H-pad.bottom} L${toX(0).toFixed(1)},${H-pad.bottom} Z`;
+
+  // Y축 레이블 (3개)
+  const yLabels = [min, (min+max)/2, max].map((v, i) => {
+    const y = toY(v);
+    return `<text x="${pad.left - 6}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--text3)">${(v/1000000).toFixed(1)}M</text>
+            <line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`;
+  }).join('');
+
+  // X축 레이블 (최대 6개)
+  const step = Math.ceil(snapshots.length / 6);
+  const xLabels = snapshots.filter((_, i) => i % step === 0 || i === snapshots.length - 1).map(s => {
+    const i = snapshots.indexOf(s);
+    const label = s.date.slice(5); // MM.DD
+    return `<text x="${toX(i).toFixed(1)}" y="${H - pad.bottom + 14}" text-anchor="middle" font-size="10" fill="var(--text3)">${label}</text>`;
+  }).join('');
+
+  // 데이터 포인트 (hover 영역)
+  const dots = snapshots.map((s, i) => {
+    const x = toX(i).toFixed(1), y = toY(s.total_value).toFixed(1);
+    return `<circle cx="${x}" cy="${y}" r="3" fill="${color}" opacity="0.8">
+      <title>${s.date}\n${fmtNum(s.total_value)}원</title>
+    </circle>`;
+  }).join('');
+
+  el.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="overflow:visible">
+      <defs>
+        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${yLabels}
+      ${xLabels}
+      <path d="${fillD}" fill="url(#chartGrad)"/>
+      <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+      ${dots}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:6px;padding:0 4px">
+      <span>시작 ${fmtNum(vals[0])}원</span>
+      <span style="color:${color};font-weight:600">현재 ${fmtNum(vals[vals.length-1])}원</span>
+    </div>
+  `;
 }
