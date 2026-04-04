@@ -174,48 +174,48 @@ async function renderPortfolio() {
         <div class="metric-label" style="margin-bottom:0">종목 현황</div>
         <button id="refresh-btn" onclick="refreshAllPrices()" style="background:var(--purple-bg);color:var(--purple);border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer">현재가 갱신</button>
       </div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1;border-radius:8px;background:rgba(76,175,125,0.08);padding:10px 12px">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">수익</div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:14px;color:var(--green)">▲</span>
-            <span style="font-size:22px;font-weight:700;color:var(--green)">${posCount}</span>
+      <div style="display:flex;gap:8px;margin-top:2px">
+        <div style="flex:1;border-radius:8px;background:rgba(76,175,125,0.08);padding:7px 10px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:3px">수익</div>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="font-size:12px;color:var(--green)">▲</span>
+            <span style="font-size:20px;font-weight:700;color:var(--green)">${posCount}</span>
           </div>
         </div>
-        <div style="flex:1;border-radius:8px;background:rgba(240,96,96,0.08);padding:10px 12px">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">손실</div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:14px;color:var(--red)">▼</span>
-            <span style="font-size:22px;font-weight:700;color:var(--red)">${negCount}</span>
+        <div style="flex:1;border-radius:8px;background:rgba(240,96,96,0.08);padding:7px 10px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:3px">손실</div>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="font-size:12px;color:var(--red)">▼</span>
+            <span style="font-size:20px;font-weight:700;color:var(--red)">${negCount}</span>
           </div>
         </div>
       </div>
     </div>
     <div class="metric" id="index-section" style="overflow:hidden">
       <div class="metric-label" style="margin-bottom:8px">주요 지수</div>
-      <div style="overflow:hidden;height:54px;position:relative">
+      <div style="overflow:hidden;height:44px;position:relative;margin-top:2px">
         <div id="idx-ticker" style="display:flex;flex-direction:column;gap:0;animation:tickerScroll 6s linear infinite">
-          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <span style="font-size:11px;color:var(--text2)">KOSPI</span>
             <span id="idx-kospi">${idxHtml('kospi')}</span>
           </div>
-          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <span style="font-size:11px;color:var(--text2)">KOSDAQ</span>
             <span id="idx-kosdaq">${idxHtml('kosdaq')}</span>
           </div>
-          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <span style="font-size:11px;color:var(--text2)">S&P 500</span>
             <span id="idx-sp500">${idxHtml('sp500')}</span>
           </div>
-          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <span style="font-size:11px;color:var(--text2)">KOSPI</span>
             <span>${idxHtml('kospi')}</span>
           </div>
-          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <span style="font-size:11px;color:var(--text2)">KOSDAQ</span>
             <span>${idxHtml('kosdaq')}</span>
           </div>
-          <div class="idx-item" style="height:27px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div class="idx-item" style="height:22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <span style="font-size:11px;color:var(--text2)">S&P 500</span>
             <span>${idxHtml('sp500')}</span>
           </div>
