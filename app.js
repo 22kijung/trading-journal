@@ -781,10 +781,12 @@ function openEntryModal() {
   renderEntryForm();
 }
 
-// ── 초기화 ────────────────────────────────────────────────────
-document.getElementById('today-date').textContent = todayStr();
-renderPortfolio();
-renderEntryForm();
+// ── 초기화 (auth.js showApp()에서 호출) ───────────────────────
+function initApp() {
+  document.getElementById('today-date').textContent = todayStr();
+  renderPortfolio();
+  renderEntryForm();
+}
 
 // ── 자동 갱신 ──────────────────────────────────────────────────
 function isMarketHours() {
