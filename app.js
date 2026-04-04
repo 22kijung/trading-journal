@@ -194,17 +194,17 @@ async function renderPortfolio() {
     </div>
     <div class="metric" id="index-section">
       <div class="metric-label" style="margin-bottom:8px">주요 지수</div>
-      <div style="height:54px;display:flex;flex-direction:column;justify-content:space-between">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:var(--text2)">KOSPI</span>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">KOSPI</div>
           <span id="idx-kospi">${idxHtml('kospi')}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:var(--text2)">KOSDAQ</span>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">KOSDAQ</div>
           <span id="idx-kosdaq">${idxHtml('kosdaq')}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:var(--text2)">S&P 500</span>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">S&P 500</div>
           <span id="idx-sp500">${idxHtml('sp500')}</span>
         </div>
       </div>
